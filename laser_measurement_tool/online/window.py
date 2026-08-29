@@ -6,7 +6,6 @@ import json
 import threading
 import time
 from collections import deque
-from dataclasses import replace
 from enum import Enum, auto
 from pathlib import Path
 
@@ -68,7 +67,6 @@ from measurement.ground_reference import (
     MeasurementError,
     SessionGroundReference,
     fit_session_ground_reference_from_support,
-    load_frozen_session_ground_reference,
 )
 from measurement.board_mask import (
     select_board_ground_points_with_mask,
@@ -81,16 +79,6 @@ from .fake_camera import SyntheticCameraSession
 from .models import CameraConfig, CameraDeviceInfo, CameraSession, CapturedFrame, FrameResult
 from .pipeline import FramePipeline
 from .recording import FrameRecorder
-from .ground_sanity import (
-    GroundSanityResult,
-    evaluate_ground_sanity,
-)
-from .ground_point_audit import (
-    GroundPointAuditValidationError,
-    build_frozen_chain_provenance,
-    build_session_ground_plane_provenance,
-    export_ground_point_audit,
-)
 from .session_calibration import (
     SessionGroundPnPQA,
     SessionGroundRepeatability,
@@ -99,7 +87,6 @@ from .session_calibration import (
     assess_checkerboard_image_quality,
     build_session_ground_payload,
     compare_ground_extrinsics,
-    merge_session_ground_sanity,
     merge_session_ground_reference,
     save_session_ground_payload,
 )
@@ -355,7 +342,6 @@ class OnlineCameraWindow(QMainWindow):
         self._session_ground_calibration_host_monotonic_ns: int | None = None
         self._session_ground_generation = 0
         self._session_ground_calibration_offset: tuple[int, int] | None = None
-        self._last_ground_sanity: GroundSanityResult | None = None
         self._last_ground_reference: SessionGroundReference | None = None
         self._ground_reference_invalid_reason: str | None = None
         self._session_calibration_active = False
@@ -1515,22 +1501,6 @@ class OnlineCameraWindow(QMainWindow):
             "不覆盖 reference 标定文件。"
         )
         stream_layout.addWidget(self.ground_reference_button)
-        self.frozen_session_ground_button = QPushButton(
-            "加载 Frozen Ground", stream_group
-        )
-        self.frozen_session_ground_button.setToolTip(
-            "仅在有效 Session PnP 外参下加载已验证的 Ground-5C physical_S JSON；"
-            "不重新拟合、不修改 C0/C1/H1，PnP 更新后自动失效。"
-        )
-        stream_layout.addWidget(self.frozen_session_ground_button)
-        self.ground_sanity_button = QPushButton(
-            "激光地面一致性检查", stream_group
-        )
-        self.ground_sanity_button.setToolTip(
-            "PnP 成功后保持棋盘不动并打开激光；使用新的激光帧检查基准面。"
-            "自动使用完整棋盘物理 mask（0 mm inset）；只报警，不自动减 Bias 或拟合 a*S+b。"
-        )
-        stream_layout.addWidget(self.ground_sanity_button)
         self.export_button = QPushButton("导出当前点云/CSV", stream_group)
         self.export_button.setToolTip(
             "保存当前帧的激光中心 CSV、重建点 CSV、地面系 PLY 和叠加图"
@@ -1572,7 +1542,6 @@ class OnlineCameraWindow(QMainWindow):
         self.ground_reference_range_label = QLabel("—", stats)
         self.ground_reference_points_label = QLabel("—", stats)
         self.ground_reference_coordinate_label = QLabel("—", stats)
-        self.ground_reference_json_sha_label = QLabel("—", stats)
         self.ground_reference_runtime_label = QLabel("—", stats)
         self.session_ground_valid_label = QLabel("INVALID · 未标定", stats)
         self.session_ground_corner_label = QLabel("—", stats)
@@ -1587,17 +1556,6 @@ class OnlineCameraWindow(QMainWindow):
         self.session_ground_quality_label.setToolTip(
             "仅显示配置阈值产生的 warning；不会自动修改图像或标定参数"
         )
-        self.session_sanity_status_label = QLabel(
-            "SESSION_CALIBRATION = 未检查", stats
-        )
-        self.session_sanity_status_label.setStyleSheet("font-weight: 600;")
-        self.session_sanity_bias_label = QLabel("—", stats)
-        self.session_sanity_rmse_label = QLabel("—", stats)
-        self.session_sanity_p95_label = QLabel("—", stats)
-        self.session_sanity_max_label = QLabel("—", stats)
-        self.session_sanity_slope_label = QLabel("—", stats)
-        self.session_sanity_valid_count_label = QLabel("—", stats)
-        self.session_sanity_mask_count_label = QLabel("—", stats)
         for title, label in (
             ("状态", self.state_label),
             ("采集 fps", self.capture_fps_label),
@@ -1616,7 +1574,6 @@ class OnlineCameraWindow(QMainWindow):
             ("reference S range", self.ground_reference_range_label),
             ("reference points", self.ground_reference_points_label),
             ("reference coordinate", self.ground_reference_coordinate_label),
-            ("Frozen JSON SHA256", self.ground_reference_json_sha_label),
             ("本帧 applied/out-of-range", self.ground_reference_runtime_label),
             ("Session 状态", self.session_ground_valid_label),
             ("角点数", self.session_ground_corner_label),
@@ -1627,13 +1584,6 @@ class OnlineCameraWindow(QMainWindow):
             ("帧间 translation", self.session_ground_repeat_translation_label),
             ("帧间 rotation", self.session_ground_repeat_rotation_label),
             ("Session PnP QA", self.session_ground_qa_label),
-            ("Bias Zg", self.session_sanity_bias_label),
-            ("Sanity RMSE", self.session_sanity_rmse_label),
-            ("Sanity P95", self.session_sanity_p95_label),
-            ("Sanity Max", self.session_sanity_max_label),
-            ("Ground slope", self.session_sanity_slope_label),
-            ("Board mask points", self.session_sanity_mask_count_label),
-            ("Valid points", self.session_sanity_valid_count_label),
         ):
             _configure_wrapping_label(label)
             stats_layout.addRow(
@@ -1646,8 +1596,6 @@ class OnlineCameraWindow(QMainWindow):
             )
         _configure_wrapping_label(self.session_ground_quality_label)
         stats_layout.addRow(self.session_ground_quality_label)
-        _configure_wrapping_label(self.session_sanity_status_label)
-        stats_layout.addRow(self.session_sanity_status_label)
         layout.addWidget(stats)
         note = QLabel("历史点仅表示最近 1 秒时间轨迹，不是连续扫描表面。", panel)
         note.setWordWrap(True)
@@ -1713,10 +1661,6 @@ class OnlineCameraWindow(QMainWindow):
         self.ground_reference_button.clicked.connect(
             self.calibrate_session_ground_reference
         )
-        self.frozen_session_ground_button.clicked.connect(
-            lambda _checked=False: self.load_frozen_session_ground()
-        )
-        self.ground_sanity_button.clicked.connect(self.run_ground_sanity_check)
         self.export_button.clicked.connect(self._export_current_frame)
         self.analysis_button.clicked.connect(self.open_frame_analysis)
         self.height_correction_combo.currentIndexChanged.connect(
@@ -1866,9 +1810,6 @@ class OnlineCameraWindow(QMainWindow):
         )
         self.ground_reference_button.setEnabled(ground_reference_available)
         self.ground_reference_source_combo.setEnabled(ground_reference_available)
-        self.frozen_session_ground_button.setEnabled(
-            ground_reference_available and self._has_valid_session_pnp()
-        )
         capture_available = (
             self._session_ground_mode != "disabled"
             and self._session_calibration_active
@@ -1898,14 +1839,6 @@ class OnlineCameraWindow(QMainWindow):
             self.session_ground_button.setText("重新 Session 基准标定")
         else:
             self.session_ground_button.setText("Session 基准标定")
-        sanity_available = (
-            self._session_ground_mode != "disabled"
-            and self._active_session_ground_result is not None
-            and has_session
-            and not self._session_calibration_active
-            and not busy
-        )
-        self.ground_sanity_button.setEnabled(sanity_available)
         self.export_button.setEnabled(
             self._last_result is not None and not busy
         )
@@ -2048,7 +1981,7 @@ class OnlineCameraWindow(QMainWindow):
             self._camera_config_syncing = False
 
     def _schedule_camera_control_update(self, *_args) -> None:
-        """Debounce live Daheng exposure/gain changes in calibration mode."""
+        """Debounce live exposure/gain changes in Session calibration mode."""
         if self._camera_config_syncing or not self._session_calibration_active:
             return
         if self._session is None or self._online_state in {
@@ -2059,18 +1992,24 @@ class OnlineCameraWindow(QMainWindow):
             return
         self._session_calibration_debounce_timer.start()
 
+    def _session_calibration_full_frame_size(self) -> tuple[int, int]:
+        """Return the full sensor size recorded by the active calibration manifest."""
+        package = self._pipeline.package
+        return int(package.image_width), int(package.image_height)
+
     def _apply_session_calibration_camera_controls(self) -> None:
         if not self._session_calibration_active or self._session is None:
             return
         current = self._session.config
+        full_width, full_height = self._session_calibration_full_frame_size()
         requested = CameraConfig(
             exposure_us=self.exposure.value(),
             gain_db=self.gain.value(),
             pixel_format=self.pixel_format.currentText(),
             offset_x=0,
             offset_y=0,
-            width=4096,
-            height=3000,
+            width=full_width,
+            height=full_height,
             timeout_ms=current.timeout_ms,
         )
         if requested == current:
@@ -2496,8 +2435,10 @@ class OnlineCameraWindow(QMainWindow):
         if self._session is None:
             self.statusBar().showMessage("请先连接相机，再进入 Session 标定模式")
             return
-        if self._camera_backend.name != "daheng":
-            self.statusBar().showMessage("Session 全幅标定模式当前仅支持 Daheng 相机")
+        if self._camera_backend.name not in {"daheng", "mvs"}:
+            self.statusBar().showMessage(
+                "Session 全幅标定模式当前仅支持 Daheng/MVS 相机"
+            )
             return
         self._session_calibration_restore_config = self._session.config
         self._session_calibration_was_streaming = self._controller.running
@@ -2520,14 +2461,15 @@ class OnlineCameraWindow(QMainWindow):
         self._update_session_calibration_quality_display()
         try:
             saved = self._session_calibration_restore_config
+            full_width, full_height = self._session_calibration_full_frame_size()
             full_frame = CameraConfig(
                 exposure_us=saved.exposure_us,
                 gain_db=saved.gain_db,
                 pixel_format=saved.pixel_format,
                 offset_x=0,
                 offset_y=0,
-                width=4096,
-                height=3000,
+                width=full_width,
+                height=full_height,
                 timeout_ms=saved.timeout_ms,
             )
             if self._controller.running:
@@ -2781,7 +2723,7 @@ class OnlineCameraWindow(QMainWindow):
             self._update_control_states()
             return
         # Update the lower preview once per submitted candidate, not once per
-        # raw camera frame.  This keeps the two views responsive at 4096x3000.
+        # raw camera frame.  This keeps the two views responsive at full frame.
         self._show_session_calibration_image(frame.image)
         quality_config = self._config.session_ground_calibration.quality
         expected = (
@@ -2926,8 +2868,6 @@ class OnlineCameraWindow(QMainWindow):
                 int(last_frame.offset_x),
                 int(last_frame.offset_y),
             )
-            self._last_ground_sanity = None
-            self._reset_ground_sanity_display()
             self._show_session_calibration_overlay(
                 last_frame.image,
                 final.detected_corners,
@@ -3067,14 +3007,17 @@ class OnlineCameraWindow(QMainWindow):
     def calibrate_session_ground(self) -> None:
         """Compatibility entry point for Session calibration.
 
-        Daheng uses the live five-frame mode.  The legacy one-frame fallback is
-        retained for non-Daheng/synthetic integrations that still call this
-        method directly; the GUI button always enters the V2 mode above.
+        Daheng and MVS use the live five-frame mode.  The legacy one-frame
+        fallback is retained for other/synthetic integrations that still call
+        this method directly; the GUI button always enters the V2 mode above.
         """
         if self._session_ground_mode == "disabled":
             self.statusBar().showMessage("Session 基准标定已在配置中禁用")
             return
-        if self._camera_backend.name == "daheng" and not self._session_calibration_active:
+        if (
+            self._camera_backend.name in {"daheng", "mvs"}
+            and not self._session_calibration_active
+        ):
             self._enter_session_calibration_mode()
             return
         try:
@@ -3131,8 +3074,6 @@ class OnlineCameraWindow(QMainWindow):
                     int(frame.offset_x),
                     int(frame.offset_y),
                 )
-                self._last_ground_sanity = None
-                self._reset_ground_sanity_display()
             except (TypeError, ValueError) as error:
                 self._set_session_ground_attempt(
                     result,
@@ -3183,216 +3124,6 @@ class OnlineCameraWindow(QMainWindow):
             )
         self._update_control_states()
 
-    def run_ground_sanity_check(self) -> None:
-        """用新的 laser-on 帧检查 Session 棋盘基准面的地面一致性。"""
-        if self._session_ground_mode == "disabled":
-            self.statusBar().showMessage("Session 基准标定已在配置中禁用")
-            return
-        if self._active_session_ground_result is None:
-            QMessageBox.information(
-                self,
-                "尚未完成 Session 标定",
-                "请先完成有效的 Session 基准标定，再执行激光地面一致性检查。",
-            )
-            return
-        if self._pipeline.extraction_method.strip().lower() != "steger":
-            QMessageBox.warning(
-                self,
-                "正式链路要求 Steger",
-                "Laser Ground Sanity Check 必须使用 Steger。"
-                "请停流后选择 Steger 并重新开始在线处理。",
-            )
-            return
-        if not self._config.reconstruction.enable_laser_ray_correction:
-            QMessageBox.warning(
-                self,
-                "正式链路缺少 Frozen C1",
-                "Laser Ground Sanity Check 要求启用 Frozen C1。"
-                "当前配置未启用 C1，检查已拒绝。",
-            )
-            return
-
-        try:
-            result = self._sanity_frame_result()
-            if result is None:
-                return
-            active_generation = self._pipeline.ground_extrinsic_generation
-            if (
-                result.ground_extrinsic_source != "session"
-                or result.ground_extrinsic_generation != active_generation
-                or active_generation != self._session_ground_generation
-            ):
-                raise GroundPointAuditValidationError(
-                    "当前 FrameResult 与 active Session ground generation 不一致"
-                )
-            calibration_host = self._session_ground_calibration_host_monotonic_ns
-            if calibration_host is None or int(result.frame.host_monotonic_ns) <= int(
-                calibration_host
-            ):
-                raise GroundPointAuditValidationError(
-                    "当前激光帧不是 Session PnP 后的新帧"
-                )
-            (
-                sanity_points,
-                selected_indices,
-                selected_mask,
-                mask_metadata,
-            ) = self._session_sanity_selection(result)
-            sanity = evaluate_ground_sanity(
-                sanity_points,
-                ground_extrinsic_source=result.ground_extrinsic_source,
-                frame_number=int(result.frame.camera_frame_number),
-                session_calibration_frame_number=(
-                    self._session_ground_calibration_frame_number
-                ),
-                frame_host_monotonic_ns=int(result.frame.host_monotonic_ns),
-                session_calibration_host_monotonic_ns=(
-                    self._session_ground_calibration_host_monotonic_ns
-                ),
-                session_generation=self._session_ground_generation,
-                thresholds=self._config.session_ground_calibration.sanity,
-                mask=mask_metadata,
-            )
-        except (OSError, RuntimeError, TypeError, ValueError) as error:
-            self._last_ground_sanity = None
-            self._reset_ground_sanity_display()
-            self.statusBar().showMessage(f"激光地面一致性检查失败：{error}")
-            QMessageBox.warning(self, "激光地面一致性检查", str(error))
-            return
-
-        self._last_ground_sanity = sanity
-        self._update_ground_sanity_display(sanity)
-        sanity_payload = sanity.as_dict()
-        sanity_payload["laser_state_assumption"] = "laser_on_assumed_from_user_action"
-        sanity_payload["stage_a_height_scale_applied"] = False
-        sanity_payload["frame"]["offset_x"] = int(result.frame.offset_x)
-        sanity_payload["frame"]["offset_y"] = int(result.frame.offset_y)
-
-        try:
-            session_json_path = self._session_ground_json_path()
-            session_plane = build_session_ground_plane_provenance(
-                self._active_session_ground_result
-            )
-            frozen_provenance = build_frozen_chain_provenance(
-                self._pipeline.package.manifest_path,
-                calibration_package_id=result.calibration_package_id,
-                calibration_manifest_sha256=result.calibration_manifest_sha256,
-                algorithm_config_sha256=result.algorithm_config_sha256,
-            )
-            metric_points = None
-            if (
-                result.ground_reference_source != "none"
-                or result.ground_reference_status != "inactive"
-            ):
-                metric_points = result.points_ground
-            audit = export_ground_point_audit(
-                session_json_path.parent / "ground_spatial_audit",
-                session_id=session_json_path.parent.name,
-                session_generation=self._session_ground_generation,
-                ground_extrinsic_generation=result.ground_extrinsic_generation,
-                frame_id=(
-                    f"camera_{int(result.frame.camera_frame_number):06d}_"
-                    f"host_{int(result.frame.host_monotonic_ns)}"
-                ),
-                camera_frame_number=int(result.frame.camera_frame_number),
-                frame_host_monotonic_ns=int(result.frame.host_monotonic_ns),
-                frame_offset=(int(result.frame.offset_x), int(result.frame.offset_y)),
-                ground_extrinsic_source=result.ground_extrinsic_source,
-                calibration_package_id=result.calibration_package_id,
-                calibration_manifest_sha256=result.calibration_manifest_sha256,
-                algorithm_config_sha256=result.algorithm_config_sha256,
-                pixels_uv=result.pixels_uv,
-                points_camera=result.points_camera,
-                points_ground_raw=result.points_ground_raw,
-                points_ground_metric=metric_points,
-                selected_indices=selected_indices,
-                selected_mask=selected_mask,
-                sanity_points=sanity_points,
-                sanity_result=sanity,
-                mask_metadata=mask_metadata,
-                ground_plane=session_plane["ground_plane"],
-                session_pnp=session_plane["session_pnp"],
-                frozen_provenance=frozen_provenance,
-            )
-        except (OSError, TypeError, ValueError, GroundPointAuditValidationError) as error:
-            self._last_ground_sanity = None
-            self._reset_ground_sanity_display()
-            self.statusBar().showMessage(
-                f"检查结果已计算，但 point-level audit 导出失败：{error}"
-            )
-            QMessageBox.warning(self, "Ground point audit 导出失败", str(error))
-            self._update_control_states()
-            return
-
-        try:
-            json_path = merge_session_ground_sanity(
-                self._session_ground_json_path(), sanity_payload
-            )
-        except (OSError, TypeError, ValueError) as error:
-            self.statusBar().showMessage(
-                f"检查结果已计算，但 Session JSON 保存失败：{error}"
-            )
-            QMessageBox.warning(self, "Session JSON 保存失败", str(error))
-            self._update_control_states()
-            return
-
-        if sanity.status == "VALID":
-            self.statusBar().showMessage(
-                "SESSION_CALIBRATION = VALID；"
-                f"Bias {sanity.bias_zg_mm:.4f} mm，"
-                f"RMSE {sanity.rmse_zg_mm:.4f} mm，"
-                f"mask 点 {sanity.mask.get('selected_point_count', sanity.input_point_count)}，"
-                f"有效点 {sanity.valid_point_count}；"
-                f"audit 已保存 {audit.audit_dir}；Session JSON {json_path}"
-            )
-        else:
-            warning_text = "; ".join(
-                (*sanity.warnings, *sanity.threshold_violations)
-            )
-            self.statusBar().showMessage(
-                f"SESSION_CALIBRATION = INVALID：{warning_text}；已保存 {json_path}"
-            )
-            QMessageBox.warning(
-                self,
-                "SESSION_CALIBRATION = INVALID",
-                f"基准面激光检查异常：{sanity.message}\n"
-                "未执行任何 Bias offset、a*S+b 或 Surface correction。",
-            )
-        self._update_control_states()
-
-    def _session_sanity_points(
-        self, result: FrameResult
-    ) -> tuple[np.ndarray, dict[str, object]]:
-        """Apply the PnP-derived board interior mask before sanity metrics."""
-        points, _, _, metadata = self._session_sanity_selection(result)
-        return points, metadata
-
-    def _session_sanity_selection(
-        self, result: FrameResult
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict[str, object]]:
-        """Return sanity points plus their exact source-row mask linkage."""
-        sanity_config = self._config.session_ground_calibration.sanity
-        points = self._raw_ground_points(result)
-        if not sanity_config.mask_enabled:
-            selected_mask = np.ones(len(points), dtype=bool)
-            return (
-                points,
-                np.arange(len(points), dtype=np.int64),
-                selected_mask,
-                {
-                    "enabled": False,
-                    "status": "disabled",
-                    "source": "configuration",
-                    "input_point_count": int(len(points)),
-                    "selected_point_count": int(len(points)),
-                },
-            )
-
-        return self._select_pnp_board_ground_points_with_mask(
-            result,
-            inset_mm=sanity_config.mask_inset_mm,
-        )
-
     @staticmethod
     def _raw_ground_points(result: FrameResult) -> np.ndarray:
         """Return raw C0+C1+extrinsic points, never a corrected view."""
@@ -3409,7 +3140,7 @@ class OnlineCameraWindow(QMainWindow):
         *,
         inset_mm: float,
     ) -> tuple[np.ndarray, dict[str, object]]:
-        """Shared PnP board-mask selection for sanity and ground reference."""
+        """Select PnP-projected board points for ground-reference fitting."""
         points, _, _, metadata = self._select_pnp_board_ground_points_with_mask(
             result,
             inset_mm=inset_mm,
@@ -3560,58 +3291,6 @@ class OnlineCameraWindow(QMainWindow):
 
         raise MeasurementError(f"不支持的 ground support source: {source}")
 
-    def _sanity_frame_result(self) -> FrameResult | None:
-        """Return a post-PnP frame; idle mode captures and runs the formal pipeline."""
-        if self._controller.running:
-            result = self._last_result
-            if result is None:
-                QMessageBox.information(
-                    self,
-                    "等待激光帧",
-                    "当前尚无实时帧，请等待新的激光-on 帧后再检查。",
-                )
-                return None
-            frame_host = int(result.frame.host_monotonic_ns)
-            calibration_host = self._session_ground_calibration_host_monotonic_ns
-            if (
-                result.ground_extrinsic_source != "session"
-                or calibration_host is None
-                or frame_host <= calibration_host
-            ):
-                QMessageBox.information(
-                    self,
-                    "等待 Session 后新帧",
-                    "请保持棋盘不动并打开激光，等待 Session 外参生效后的新帧，"
-                    "再点击检查。",
-                )
-                return None
-            return result
-
-        if self._session is None:
-            QMessageBox.information(self, "未连接", "请先连接相机")
-            return None
-        try:
-            self._session.start()
-            frame = self._session.get_frame(self._session.config.timeout_ms)
-            self._show_raw_frame(frame)
-            # This is the same FramePipeline path used by online streaming:
-            # Steger -> frozen C0/C1 -> current (Session) ground extrinsic.
-            result = self._pipeline.run_frame(frame)
-        except (OSError, RuntimeError, TypeError, ValueError) as error:
-            QMessageBox.warning(
-                self,
-                "激光地面一致性检查",
-                f"无法采集或重建新的 laser-on 帧：{error}",
-            )
-            return None
-        finally:
-            try:
-                self._session.stop()
-            except Exception:
-                pass
-        self._show_result(result)
-        return result
-
     def _ground_reference_frame_result(self) -> FrameResult | None:
         """Return a current laser-on frame without requiring Session PnP."""
         if self._controller.running:
@@ -3760,104 +3439,6 @@ class OnlineCameraWindow(QMainWindow):
             "已冻结到当前 Session（不修改 reference 标定）"
         )
 
-    def load_frozen_session_ground(self, path: str | Path | None = None) -> bool:
-        """Load the validated Ground-5C A-2 model for the active Session PnP.
-
-        This is deliberately a load-only path.  It never calls a fitter and
-        never writes the selected JSON.  If a frame is already displayed, its
-        retained raw ground points are re-leveled in memory so the UI changes
-        without re-running laser extraction.
-        """
-        if not self._has_valid_session_pnp():
-            message = "请先完成有效的 Session PnP，再加载 Frozen Session Ground"
-            self.statusBar().showMessage(message)
-            QMessageBox.information(self, "Frozen Session Ground", message)
-            return False
-
-        if path is None:
-            default_path = (
-                Path(__file__).resolve().parents[2]
-                / "outputs"
-                / "ground5c_frozen_session_linear_0821"
-                / "frozen_session_linear.json"
-            )
-            selected, _ = QFileDialog.getOpenFileName(
-                self,
-                "加载 Frozen Session Ground",
-                str(default_path if default_path.exists() else default_path.parent),
-                "JSON 文件 (*.json)",
-            )
-            if not selected:
-                return False
-            path = selected
-
-        previous_result = self._last_result
-        try:
-            reference = load_frozen_session_ground_reference(
-                path,
-                active_ground_extrinsic_source=self._pipeline.ground_extrinsic_source,
-                ground_extrinsic_generation=(
-                    self._pipeline.ground_extrinsic_generation
-                ),
-            )
-            self._pipeline.apply_session_ground_reference(reference)
-        except (OSError, TypeError, ValueError) as error:
-            QMessageBox.warning(
-                self,
-                "Frozen Session Ground 加载失败",
-                str(error),
-            )
-            return False
-
-        self._last_ground_reference = reference
-        self._ground_reference_invalid_reason = None
-        self._invalidate_live_reconstruction_after_ground_update()
-        self._update_ground_reference_display()
-
-        if previous_result is not None:
-            raw_points = previous_result.points_ground_raw
-            if raw_points is None:
-                raw_points = previous_result.points_ground
-            raw_points = np.ascontiguousarray(
-                np.asarray(raw_points, dtype=np.float64).copy()
-            )
-            try:
-                corrected, metadata = self._pipeline.apply_ground_reference_to_points(
-                    raw_points
-                )
-                refreshed = replace(
-                    previous_result,
-                    points_ground=corrected,
-                    points_ground_raw=raw_points,
-                    section_xz=(
-                        np.ascontiguousarray(corrected[:, (0, 2)])
-                        if len(corrected)
-                        else np.empty((0, 2), dtype=np.float64)
-                    ),
-                    ground_extrinsic_source=self._pipeline.ground_extrinsic_source,
-                    ground_extrinsic_generation=(
-                        self._pipeline.ground_extrinsic_generation
-                    ),
-                    **metadata,
-                )
-            except (TypeError, ValueError) as error:
-                self.statusBar().showMessage(
-                    f"Frozen Session Ground 已加载，等待下一帧刷新：{error}"
-                )
-            else:
-                self._show_result(refreshed)
-
-        self._update_control_states()
-        lower, upper = reference.valid_s_range_mm
-        self.statusBar().showMessage(
-            "GROUND5C_FROZEN_SESSION = VALID | "
-            f"physical_S a={reference.slope_z_per_mm:.9f} "
-            f"b={reference.intercept_z_mm:.6f} mm | "
-            f"S {lower:.2f}~{upper:.2f} mm | "
-            f"JSON SHA256 {reference.frozen_json_sha256}"
-        )
-        return True
-
     def _session_calibration_frame(self) -> CapturedFrame | None:
         if self._last_result is not None:
             return self._last_result.frame
@@ -3952,58 +3533,6 @@ class OnlineCameraWindow(QMainWindow):
         )
         self._update_session_calibration_quality_display()
 
-    def _update_ground_sanity_display(
-        self, result: GroundSanityResult | None
-    ) -> None:
-        if result is None:
-            self._reset_ground_sanity_display()
-            return
-        self.session_sanity_status_label.setText(
-            f"SESSION_CALIBRATION = {result.status}"
-        )
-        self.session_sanity_bias_label.setText(
-            _format_mm(result.bias_zg_mm)
-        )
-        self.session_sanity_rmse_label.setText(
-            _format_mm(result.rmse_zg_mm)
-        )
-        self.session_sanity_p95_label.setText(
-            _format_mm(result.p95_abs_zg_mm)
-        )
-        self.session_sanity_max_label.setText(
-            _format_mm(result.max_abs_zg_mm)
-        )
-        self.session_sanity_slope_label.setText(
-            "—"
-            if result.ground_slope_mm_per_mm is None
-            else f"{result.ground_slope_mm_per_mm:.6f} mm/mm"
-        )
-        mask = result.mask
-        if mask.get("enabled") is False:
-            self.session_sanity_mask_count_label.setText("未启用")
-        elif mask.get("status") == "applied":
-            self.session_sanity_mask_count_label.setText(
-                f"{mask.get('selected_point_count', 0)} / "
-                f"{mask.get('input_point_count', result.input_point_count)}"
-            )
-        else:
-            self.session_sanity_mask_count_label.setText("不可用")
-        self.session_sanity_valid_count_label.setText(
-            f"{result.valid_point_count} / {result.input_point_count}"
-        )
-
-    def _reset_ground_sanity_display(self) -> None:
-        if not hasattr(self, "session_sanity_status_label"):
-            return
-        self.session_sanity_status_label.setText("SESSION_CALIBRATION = 未检查")
-        self.session_sanity_bias_label.setText("—")
-        self.session_sanity_rmse_label.setText("—")
-        self.session_sanity_p95_label.setText("—")
-        self.session_sanity_max_label.setText("—")
-        self.session_sanity_slope_label.setText("—")
-        self.session_sanity_mask_count_label.setText("—")
-        self.session_sanity_valid_count_label.setText("—")
-
     def _update_ground_source_label(self) -> None:
         self.ground_source_label.setText(self._pipeline.ground_extrinsic_source)
         self._update_ground_reference_display()
@@ -4020,17 +3549,14 @@ class OnlineCameraWindow(QMainWindow):
             self.ground_reference_range_label.setText("—")
             self.ground_reference_points_label.setText("—")
             self.ground_reference_coordinate_label.setText("—")
-            self.ground_reference_json_sha_label.setText("—")
             self.ground_reference_runtime_label.setText("—")
             self.ground_reference_status_label.setToolTip("")
-            self.ground_reference_json_sha_label.setToolTip("")
             self.ground_reference_runtime_label.setToolTip("")
             return
         self._ground_reference_invalid_reason = None
         coordinate = reference.coordinate or "legacy"
-        frozen = bool(reference.frozen_json_sha256)
         self.ground_reference_status_label.setText(
-            f"{reference.status} · {'Frozen' if frozen else reference.provenance_source}"
+            f"{reference.status} · {reference.provenance_source}"
         )
         self.ground_reference_status_label.setToolTip(
             f"source={reference.provenance_source}; "
@@ -4038,8 +3564,7 @@ class OnlineCameraWindow(QMainWindow):
             f"generation={reference.ground_extrinsic_generation}; "
             f"coordinate={coordinate}; "
             f"a={reference.slope_z_per_mm:.9f}; "
-            f"b={reference.intercept_z_mm:.6f}; "
-            f"json_sha256={reference.frozen_json_sha256 or 'none'}"
+            f"b={reference.intercept_z_mm:.6f}"
         )
         self.ground_reference_slope_label.setText(
             f"{reference.slope_z_per_mm:.7f} mm/mm"
@@ -4055,20 +3580,10 @@ class OnlineCameraWindow(QMainWindow):
             f"{lower:.2f} ~ {upper:.2f} mm"
         )
         self.ground_reference_points_label.setText(
-            (
-                f"{reference.inlier_count} formal bins"
-                if reference.frozen_json_sha256
-                else f"{reference.inlier_count}/{reference.point_count}"
-            )
+            f"{reference.inlier_count}/{reference.point_count}"
         )
         self.ground_reference_coordinate_label.setText(
             reference.coordinate or "—"
-        )
-        self.ground_reference_json_sha_label.setText(
-            _compact_sha256(reference.frozen_json_sha256) or "非 Frozen JSON"
-        )
-        self.ground_reference_json_sha_label.setToolTip(
-            reference.frozen_json_sha256 or "非 Frozen JSON"
         )
         self.ground_reference_runtime_label.setText("等待新帧")
         self.ground_reference_runtime_label.setToolTip("等待新帧")
@@ -4114,7 +3629,6 @@ class OnlineCameraWindow(QMainWindow):
         self._session_calibration_repeatability = None
         self._session_calibration_qa = None
         self._session_calibration_quality = None
-        self._last_ground_sanity = None
         self._last_ground_reference = None
         self._ground_reference_invalid_reason = (
             "标定包已切换，激光地面基准需重新标定"
@@ -4122,7 +3636,6 @@ class OnlineCameraWindow(QMainWindow):
         self._pipeline.reset_ground_extrinsic(generation=0)
         if hasattr(self, "session_ground_valid_label"):
             self._update_session_ground_display(self._last_session_ground_result, None)
-            self._reset_ground_sanity_display()
             self._update_ground_source_label()
 
     def _invalidate_ground_reference_for_extrinsic_change(self, reason: str) -> None:
@@ -4157,7 +3670,6 @@ class OnlineCameraWindow(QMainWindow):
         self._session_calibration_repeatability = None
         self._session_calibration_qa = None
         self._session_calibration_quality = None
-        self._last_ground_sanity = None
         self._last_ground_reference = None
         self._ground_reference_invalid_reason = None
         self._pipeline.reset_ground_extrinsic(generation=0)
@@ -4173,7 +3685,6 @@ class OnlineCameraWindow(QMainWindow):
             self.session_ground_repeat_rotation_label.setText("—")
             self.session_ground_qa_label.setText("Session PnP QA: —")
             self.session_ground_quality_label.setText("棋盘质量：—")
-            self._reset_ground_sanity_display()
             self._update_ground_source_label()
 
     # Backward-compatible internal name for callers from older integrations;
@@ -4808,25 +4319,12 @@ def _double_spin(
     return widget
 
 
-def _format_mm(value: float | None) -> str:
-    return "—" if value is None else f"{value:.4f} mm"
-
-
 def _format_qa_metric(value: object, suffix: str) -> str:
     return "—" if value is None else f"{float(value):.4f} {suffix}"
 
 
 def _format_optional(value: float | None) -> str:
     return "—" if value is None else f"{value:.6f}"
-
-
-def _compact_sha256(value: str | None) -> str:
-    """Keep the sidebar readable while retaining the full SHA in the tooltip."""
-    if not value:
-        return ""
-    if len(value) <= 24:
-        return value
-    return f"{value[:12]}…{value[-8:]}"
 
 
 def _section_connection_mask(

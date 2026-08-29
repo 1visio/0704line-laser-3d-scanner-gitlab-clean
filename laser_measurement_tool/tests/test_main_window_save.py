@@ -144,8 +144,8 @@ class MainWindowSaveTests(unittest.TestCase):
                 for label in window._obstacle_result_groups[0].findChildren(QLabel)
             ]
             label_text = "\n".join(labels)
-            self.assertIn("原始高度 height_raw (均值): 12.500 mm", label_text)
-            self.assertIn("补偿高度 height_stage_a: 12.550 mm", label_text)
+            self.assertIn("原始高度: 12.500 mm", label_text)
+            self.assertIn("Stage-A 高度: 12.550 mm", label_text)
             self.assertIn("Stage-A 状态: 已应用", label_text)
             self.assertNotIn("ground_reference_mode", label_text)
             self.assertNotIn("ground_extrinsic_source", label_text)

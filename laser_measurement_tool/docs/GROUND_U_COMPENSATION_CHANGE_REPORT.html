@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>单帧测量工具地面 U 向补偿改动报告</title>
+  <style>
+    body { max-width: 1080px; margin: 32px auto; padding: 0 24px; color: #202124; font: 16px/1.65 "Microsoft YaHei", sans-serif; }
+    h1, h2 { color: #174ea6; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; }
+    th, td { border: 1px solid #dadce0; padding: 8px 12px; text-align: left; }
+    code { background: #f1f3f4; padding: 2px 5px; border-radius: 3px; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0; }
+    .node { border: 2px solid #4285f4; border-radius: 8px; padding: 10px 12px; background: #e8f0fe; }
+    .data { border-color: #f9ab00; background: #fef7e0; }
+    .changed { border-color: #a142f4; background: #f3e8fd; }
+    .output { border-color: #188038; background: #e6f4ea; }
+    .arrow { color: #5f6368; font-size: 22px; }
+  </style>
+</head>
+<body>
+  <h1>单帧测量工具地面 U 向补偿改动报告</h1>
+  <p>日期：2026-07-28。目标：让工具直接读取 <code>ground_bias_validation_results_v2_0728/ground_bias_table.csv</code>，并在统一三维重建接口中实际应用补偿。</p>
+
+  <h2>图例</h2>
+  <table>
+    <tr><th>颜色</th><th>含义</th></tr>
+    <tr><td>蓝色</td><td>原有处理步骤</td></tr>
+    <tr><td>黄色</td><td>0728 补偿数据</td></tr>
+    <tr><td>紫色</td><td>本次新增逻辑</td></tr>
+    <tr><td>绿色</td><td>补偿后的统一输出</td></tr>
+  </table>
+
+  <h2>代码流程</h2>
+  <div class="flow">
+    <div class="node">激光中心 u,v</div><div class="arrow">→</div>
+    <div class="node">激光平面求交</div><div class="arrow">→</div>
+    <div class="node">变换到地面坐标</div><div class="arrow">→</div>
+    <div class="node changed">按 u 插值 bias_mm<br>Zg -= bias</div><div class="arrow">→</div>
+    <div class="node changed">基准 ROI 或固定 Zg=0</div><div class="arrow">→</div>
+    <div class="node output">测量与点云输出</div>
+  </div>
+  <div class="flow">
+    <div class="node data">ground_bias_table.csv</div><div class="arrow">→</div>
+    <div class="node changed">列名、有限值、递增性校验</div><div class="arrow">↗</div>
+  </div>
+
+  <h2>主要改动</h2>
+  <table>
+    <tr><th>模块</th><th>改动</th></tr>
+    <tr><td>config_loader.py</td><td>支持 validation v2 CSV；规范化为 column_u_px / bias_mm</td></tr>
+    <tr><td>reconstructor.py</td><td>新增 apply_ground_u_compensation，并接入 reconstruct_uv_to_ground</td></tr>
+    <tr><td>measure_tool.yaml</td><td>切换到 0728 内参、激光平面、地面外参和补偿表</td></tr>
+    <tr><td>main_window.py</td><td>保存结果时记录补偿文件路径</td></tr>
+    <tr><td>height_measure.py / main_window.py</td><td>未选择基准 ROI 时自动使用固定 Zg=0；不伪造地面噪声和基准夹角</td></tr>
+    <tr><td>result_io.py / main_window.py</td><td>保存整幅激光线补偿后的地面系点云 full_laser_ground.ply</td></tr>
+    <tr><td>backends.py</td><td>接入实验版 Steger/Hessian 亚像素算法，修复轴对齐退化并支持水平/竖直扫描</td></tr>
+    <tr><td>roi_manager.py / main_window.py</td><td>多个基准 ROI 合并拟合；多个障碍物 ROI 编号后分别重建、拟合、显示和保存</td></tr>
+    <tr><td>tests</td><td>覆盖 CSV 加载、插值、端点钳位、关闭和非法表格</td></tr>
+  </table>
+
+  <h2>关键约定</h2>
+  <p><code>Zg_corrected = Zg_raw - bias(u)</code>。表内空缺线性插值，表外使用最近端点；配置为 <code>null</code> 时不改变原始重建行为。</p>
+  <p>完整命令、参数和迁移说明见同目录 <code>GROUND_U_COMPENSATION_GUIDE.md</code>。</p>
+</body>
+</html>

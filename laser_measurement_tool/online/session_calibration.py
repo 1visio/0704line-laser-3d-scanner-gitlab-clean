@@ -234,7 +234,7 @@ def checkerboard_physical_polygon(
 
     The returned polygon extends one corner spacing beyond the detected inner
     corner grid on all four sides.  It is a display/quality-mask helper only;
-    Laser Ground Check continues to use its PnP physical-board mask.
+    Runtime ground-reference fitting continues to use the PnP physical-board mask.
     """
     array = np.asarray(corners, dtype=np.float64).reshape(-1, 2)
     expected = int(pattern_cols) * int(pattern_rows)
@@ -1154,8 +1154,8 @@ def build_session_ground_payload(
 def save_session_ground_payload(path: str | Path, payload: dict[str, Any]) -> Path:
     """Atomically save the latest session record.
 
-    PnP retries must not erase independently acquired Session ground-reference
-    or laser-sanity records that are already in the same JSON file.
+    PnP retries must not erase an independently acquired Session ground-reference
+    record that is already in the same JSON file.
     """
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -1169,8 +1169,6 @@ def save_session_ground_payload(path: str | Path, payload: dict[str, Any]) -> Pa
             for key in (
                 "session_ground_reference",
                 "session_ground_reference_status",
-                "laser_ground_sanity",
-                "session_calibration_status",
             ):
                 if key not in record and key in previous:
                     record[key] = previous[key]
@@ -1204,51 +1202,13 @@ def save_session_ground_payload(path: str | Path, payload: dict[str, Any]) -> Pa
     return target
 
 
-def merge_session_ground_sanity(
-    path: str | Path,
-    sanity_payload: dict[str, Any],
-) -> Path:
-    """Merge one laser-ground sanity record into the Session JSON.
-
-    The PnP record remains intact; the check is stored under
-    ``laser_ground_sanity`` and also exposes its status at the top level for
-    scripts that do not need to understand the nested metrics.
-    """
-    target = Path(path)
-    if target.is_file():
-        try:
-            existing = json.loads(target.read_text(encoding="utf-8"))
-        except (OSError, UnicodeError, json.JSONDecodeError) as error:
-            raise ValueError(f"无法读取 Session 标定 JSON: {target}: {error}") from error
-        if not isinstance(existing, dict):
-            raise ValueError(f"Session 标定 JSON 根节点必须是对象: {target}")
-    else:
-        existing = {
-            "schema_version": 1,
-            "source": "session_ground_calibration",
-        }
-
-    existing["laser_ground_sanity"] = dict(sanity_payload)
-    existing["session_calibration_status"] = sanity_payload.get("status", "INVALID")
-    runtime = existing.get("runtime")
-    if not isinstance(runtime, dict):
-        runtime = {}
-        existing["runtime"] = runtime
-    if "ground_extrinsic_source" in sanity_payload:
-        runtime["ground_extrinsic_source"] = sanity_payload[
-            "ground_extrinsic_source"
-        ]
-    existing["saved_at_utc"] = datetime.now(timezone.utc).isoformat()
-    return save_session_ground_payload(target, existing)
-
-
 def merge_session_ground_reference(
     path: str | Path,
     reference_payload: Mapping[str, Any],
     *,
     ground_extrinsic_source: str,
 ) -> Path:
-    """Merge the frozen linear ground reference into the Session JSON."""
+    """Merge the fitted Session ground reference into the Session JSON."""
     target = Path(path)
     if target.is_file():
         try:
@@ -1304,7 +1264,6 @@ __all__ = [
     "build_session_ground_payload",
     "checkerboard_physical_polygon",
     "compare_ground_extrinsics",
-    "merge_session_ground_sanity",
     "merge_session_ground_reference",
     "save_session_ground_payload",
 ]

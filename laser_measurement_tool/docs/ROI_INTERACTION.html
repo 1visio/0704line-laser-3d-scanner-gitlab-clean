@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>ROI 交互与点筛选改动说明</title>
+  <style>
+    body { max-width: 960px; margin: 32px auto; padding: 0 24px; color: #202124; font: 16px/1.65 sans-serif; }
+    h1, h2 { color: #174ea6; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #dadce0; padding: 8px 12px; text-align: left; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0; }
+    .node { border: 2px solid #5f6368; border-radius: 8px; padding: 10px 14px; background: #f8f9fa; }
+    .baseline { border-color: #286eff; background: #e8f0fe; }
+    .obstacle { border-color: #eb3c3c; background: #fce8e6; }
+    .output { border-color: #188038; background: #e6f4ea; }
+    .arrow { color: #5f6368; font-size: 24px; }
+    code { background: #f1f3f4; padding: 2px 5px; }
+  </style>
+</head>
+<body>
+  <h1>ROI 交互与点筛选改动说明</h1>
+  <h2>图例</h2>
+  <table>
+    <tr><th>颜色/名称</th><th>含义</th></tr>
+    <tr><td>蓝色矩形</td><td>基准区域</td></tr>
+    <tr><td>红色矩形</td><td>障碍物区域</td></tr>
+    <tr><td>绿色点</td><td>全部激光中心点</td></tr>
+    <tr><td><code>baseline_points</code></td><td>基准 ROI 内的中心点</td></tr>
+    <tr><td><code>obstacle_point_groups</code></td><td>各障碍物 ROI 按添加顺序独立保存的中心点组</td></tr>
+  </table>
+  <h2>主要改动</h2>
+  <ul>
+    <li>图像窗口支持一次性矩形框选，完成后恢复拖动平移。</li>
+    <li>多个基准区域取并集共同拟合；多个障碍物区域按“障碍物 1、2…”分别拟合。</li>
+    <li>红框编号与右侧结果、JSON obstacles 数组和 obstacle_N_points.csv 一致。</li>
+    <li>ROI 管理及中心点筛选与 PySide6 绘制代码分离。</li>
+    <li>新图像会清空旧 ROI，三维恢复代码未修改。</li>
+  </ul>
+  <h2>代码流程图</h2>
+  <div class="flow">
+    <div class="node">矩形拖动</div><div class="arrow">→</div>
+    <div class="node baseline">基准 ROI</div><div class="arrow">/</div>
+    <div class="node obstacle">障碍物 ROI</div><div class="arrow">→</div>
+    <div class="node">RoiManager</div><div class="arrow">→</div>
+    <div class="node output">公共 baseline_points<br>obstacle 1 / 2... 独立点组</div>
+  </div>
+</body>
+</html>

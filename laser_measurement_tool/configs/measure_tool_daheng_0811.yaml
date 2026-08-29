@@ -52,17 +52,6 @@ session_ground_calibration:
   ground_reference:
     support_source: pnp_board_mask
     mask_inset_mm: 0.0
-  sanity:
-    # 使用 PnP 投影的完整棋盘物理边界；0 mm 表示完整 12x9 方格，
-    # 不做像素腐蚀/膨胀；仅用于报警判定，不自动减 Bias、不拟合 a*S+b。
-    mask_enabled: true
-    mask_inset_mm: 0.0
-    min_valid_points: 20
-    max_abs_bias_mm: 2.0
-    max_rmse_mm: 2.0
-    max_p95_abs_mm: 3.0
-    max_abs_mm: 5.0
-    max_abs_slope_mm_per_mm: 0.02
 
 extraction:
   method: steger
@@ -93,6 +82,7 @@ reconstruction:
   quadratic_epsilon: 1.0e-12
   # 保留现有在线工作距离门限；冻结 Quadratic 的 z_valid_range 下限约为 599.916 mm，
   # 因此约 599.916–630.0 mm 仍会由在线门限主动过滤。
+  #初始：max_camera_depth_mm: 715.0，model_range_margin_mm: 2.0，8.29调试放宽
   min_camera_depth_mm: 630.0
   max_camera_depth_mm: 715.0
   model_range_margin_mm: 2.0

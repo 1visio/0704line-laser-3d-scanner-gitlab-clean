@@ -10,10 +10,6 @@ from .height_measure import (
     measure_height_lines,
 )
 from .ground_reference import (
-    FROZEN_SESSION_COORDINATE,
-    FROZEN_SESSION_FIT_POSE_IDS,
-    FROZEN_SESSION_FORMULA,
-    GROUND_SUPPORT_FROZEN_SESSION,
     GROUND_SUPPORT_MANUAL_ROI,
     GROUND_SUPPORT_PNP_BOARD_MASK,
     SessionGroundReference,
@@ -23,7 +19,6 @@ from .ground_reference import (
     fit_line_xy,
     fit_session_ground_reference,
     fit_session_ground_reference_from_support,
-    load_frozen_session_ground_reference,
 )
 from .board_mask import (
     BoardGroundPointSelection,
@@ -44,10 +39,6 @@ __all__ = [
     "RoiKind",
     "RoiManager",
     "RoiRegion",
-    "FROZEN_SESSION_COORDINATE",
-    "FROZEN_SESSION_FIT_POSE_IDS",
-    "FROZEN_SESSION_FORMULA",
-    "GROUND_SUPPORT_FROZEN_SESSION",
     "GROUND_SUPPORT_MANUAL_ROI",
     "GROUND_SUPPORT_PNP_BOARD_MASK",
     "SessionGroundReference",
@@ -57,7 +48,6 @@ __all__ = [
     "fit_line_xy",
     "fit_session_ground_reference",
     "fit_session_ground_reference_from_support",
-    "load_frozen_session_ground_reference",
     "full_board_physical_polygon",
     "measure_height_line",
     "measure_height_lines",

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>激光中心提取接口改动说明</title>
+  <style>
+    body { max-width: 960px; margin: 32px auto; padding: 0 24px; color: #202124; font: 16px/1.65 sans-serif; }
+    h1, h2 { color: #174ea6; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #dadce0; padding: 8px 12px; text-align: left; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0; }
+    .node { border: 2px solid #4285f4; border-radius: 8px; padding: 10px 14px; background: #e8f0fe; }
+    .backend { border-color: #a142f4; background: #f3e8fd; }
+    .output { border-color: #188038; background: #e6f4ea; }
+    .warning { border-color: #d93025; background: #fce8e6; }
+    .arrow { color: #5f6368; font-size: 24px; }
+    code { background: #f1f3f4; padding: 2px 5px; }
+  </style>
+</head>
+<body>
+  <h1>激光中心提取接口改动说明</h1>
+  <h2>图例</h2>
+  <table>
+    <tr><th>颜色</th><th>含义</th></tr>
+    <tr><td>蓝色</td><td>GUI 与稳定接口</td></tr>
+    <tr><td>紫色</td><td>centroid / Steger 算法 backend</td></tr>
+    <tr><td>绿色</td><td>叠加显示和 CSV 输出</td></tr>
+    <tr><td>红色</td><td>未配置算法时的明确提示</td></tr>
+  </table>
+  <h2>主要改动</h2>
+  <ul>
+    <li>新增 <code>extract_laser_center(image, params)</code>，输出统一为 N×2 亚像素坐标。</li>
+    <li>内置 centroid 与 Steger；Steger 使用高斯导数、Hessian 主曲率和二阶泰勒亚像素定位。</li>
+    <li>Steger 修复了实验版在严格水平/竖直条纹上的特征向量退化，并加入条纹带裁剪。</li>
+    <li>提取成功后显示绿色中心点，并保存带 <code>u,v</code> 表头的 CSV。</li>
+    <li>输出文件自动追加序号，避免覆盖历史结果。</li>
+  </ul>
+  <h2>代码流程图</h2>
+  <div class="flow">
+    <div class="node">点击提取激光线</div><div class="arrow">→</div>
+    <div class="node">extract_laser_center</div><div class="arrow">→</div>
+    <div class="node backend">centroid / Steger backend</div><div class="arrow">→</div>
+    <div class="node output">中心点叠加 + CSV</div>
+  </div>
+  <div class="flow">
+    <div class="node">backend 未配置</div><div class="arrow">→</div>
+    <div class="node warning">提示算法未接入，不生成伪结果</div>
+  </div>
+</body>
+</html>

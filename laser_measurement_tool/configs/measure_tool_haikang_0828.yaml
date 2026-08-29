@@ -1,0 +1,91 @@
+# 海康 MV-CS050-60GM · 2026-08-28 第一轮标定
+# 这是独立配置，不覆盖默认配置或大恒配置。
+
+schema_version: 1
+system: mvs
+
+camera:
+  exposure_us: 800.0
+  gain_db: 0.0
+  pixel_format: Mono8
+  # 基于 2026-08-28 海康激光图的 ROI；三维恢复时会自动还原为全幅坐标。
+  offset_x: 200
+  offset_y: 760
+  width: 2248
+  height: 400
+  timeout_ms: 2000
+
+calibration:
+  manifest: calibration_haikang_0828/manifest.yaml
+  intrinsics: calibration_haikang_0828/calibration_result.yaml
+  laser_model: calibration_haikang_0828/circular_cone.yaml
+  extrinsics: calibration_haikang_0828/camera_ground_extrinsics.yaml
+  ground_u_compensation: null
+
+correction:
+  # 第一阶段只验证海康几何恢复和 raw height。
+  mode: none
+  stage_a_height_scale_enabled: false
+  stage_a_height_scale_config: null
+  hb2_height_correction_config: null
+  hb2_q2_policy: reject
+
+session_ground_calibration:
+  mode: optional
+  pattern_cols: 11
+  pattern_rows: 8
+  square_size_mm: 20.0
+  detector: sb_then_classic
+  output: null
+  quality:
+    target_frames: 5
+    max_capture_attempts: 8
+    max_reprojection_rmse_px: 0.5
+    saturation_ratio_warn: 0.05
+    dynamic_range_p95_p5_warn: 20.0
+    edge_margin_warn_px: 20.0
+  ground_reference:
+    support_source: pnp_board_mask
+    mask_inset_mm: 0.0
+
+extraction:
+  method: steger
+  profile: realtime_steger.yaml
+  centroid:
+    background_kernel: 51
+    min_local_contrast_dn: 20.0
+    centroid_window_radius: 5
+    segment_min_columns: 42
+    continuity_max_column_gap: 2
+    continuity_max_vertical_jump: 14.0
+    correction_window: 7
+    correction_max_shift: 3.5
+    scan_axis: column
+  steger:
+    search_roi:
+      offset_x: 200
+      offset_y: 760
+      width: 2248
+      height: 400
+  shared_steger: {}
+
+reconstruction:
+  parallel_epsilon: 1.0e-9
+  quadratic_epsilon: 1.0e-12
+  # 海康 circular_cone 的 z_valid_range 外扩 10 mm 后的运行范围。
+  min_camera_depth_mm: 725.0
+  max_camera_depth_mm: 865.0
+  model_range_margin_mm: 10.0
+  image_roi_polygon: null
+
+measurement:
+  outlier_sigma_multiplier: 2.0
+  outlier_max_iterations: 5
+  min_baseline_points: 20
+  min_height_points: 20
+
+output:
+  dir: ../output_haikang_0828
+  save_pointcloud_csv: true
+  save_overlay_png: true
+  save_full_pointcloud_ply: true

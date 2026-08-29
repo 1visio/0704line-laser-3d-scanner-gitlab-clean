@@ -246,7 +246,7 @@ class FrozenC1IntegrationTests(unittest.TestCase):
         np.testing.assert_array_equal(
             explicit_c1.coefficients_mm, manifest_c1.coefficients_mm
         )
-        self.assertFalse(config.reconstruction.enable_laser_ray_correction)
+        self.assertTrue(config.reconstruction.enable_laser_ray_correction)
 
     def test_enabled_c1_requires_quadratic_graph_and_parameters(self) -> None:
         calibration = _synthetic_plane_calibration()

@@ -54,19 +54,7 @@ session_ground_calibration:
   ground_reference:
     # 运行时地面基准必须来自明确的支撑源；无 PnP 时可切换 manual_ground_roi。
     support_source: pnp_board_mask
-    # 独立于 Ground Sanity 的棋盘物理边界 inset；0 表示完整物理棋盘 mask。
     mask_inset_mm: 0.0
-  sanity:
-    # 使用 PnP 投影的完整棋盘物理边界；0 mm 表示完整 12x9 方格，
-    # 不做像素腐蚀/膨胀；只报警，不做 bias offset 或 a*S+b 拟合。
-    mask_enabled: true
-    mask_inset_mm: 0.0
-    min_valid_points: 20
-    max_abs_bias_mm: 2.0
-    max_rmse_mm: 2.0
-    max_p95_abs_mm: 3.0
-    max_abs_mm: 5.0
-    max_abs_slope_mm_per_mm: 0.02
 
 extraction:
   # 标定与在线统一使用实时 Steger；参数集中在同目录 realtime_steger.yaml

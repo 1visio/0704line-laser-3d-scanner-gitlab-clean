@@ -68,10 +68,6 @@ class LoadAppConfigTest(unittest.TestCase):
             20.0,
         )
         self.assertEqual(
-            config.session_ground_calibration.sanity.min_valid_points,
-            20,
-        )
-        self.assertEqual(
             config.session_ground_calibration.ground_reference.support_source,
             "pnp_board_mask",
         )
@@ -148,9 +144,6 @@ session_ground_calibration:
   square_size_mm: 20.0
   detector: classic
   output: session/session_ground_calibration.json
-  sanity:
-    min_valid_points: 24
-    max_abs_bias_mm: 1.5
   ground_reference:
     support_source: manual_ground_roi
     mask_inset_mm: 3.5
@@ -163,16 +156,6 @@ session_ground_calibration:
             config.session_ground_calibration.output,
             (path.parent / "session/session_ground_calibration.json").resolve(),
         )
-        self.assertEqual(
-            config.session_ground_calibration.sanity.min_valid_points,
-            24,
-        )
-        self.assertEqual(
-            config.session_ground_calibration.sanity.max_abs_bias_mm,
-            1.5,
-        )
-        self.assertTrue(config.session_ground_calibration.sanity.mask_enabled)
-        self.assertEqual(config.session_ground_calibration.sanity.mask_inset_mm, 0.0)
         self.assertEqual(
             config.session_ground_calibration.ground_reference.support_source,
             "manual_ground_roi",

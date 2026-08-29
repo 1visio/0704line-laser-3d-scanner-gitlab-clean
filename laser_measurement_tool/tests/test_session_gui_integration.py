@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import hashlib
 import os
 from dataclasses import replace
 from pathlib import Path
@@ -19,12 +18,12 @@ from PySide6.QtWidgets import QApplication
 
 from app_config import DEFAULT_CONFIG_PATH, load_app_config
 from calibration.session_ground import SessionGroundExtrinsic
+from online.models import CapturedFrame
 from online.pipeline import FramePipeline
-from online.ground_sanity import GroundSanityResult
 from online.session_calibration import (
+    SessionGroundRepeatability,
     build_session_ground_payload,
     compare_ground_extrinsics,
-    merge_session_ground_sanity,
     save_session_ground_payload,
 )
 from online.window import OnlineCameraWindow
@@ -84,29 +83,11 @@ class SessionGroundRuntimeTests(unittest.TestCase):
             save_session_ground_payload(path, payload)
             payload["runtime"]["ground_extrinsic_source"] = "reference"
             save_session_ground_payload(path, payload)
-            sanity_payload = GroundSanityResult(
-                status="VALID",
-                message="ok",
-                ground_extrinsic_source="session",
-                frame_number=13,
-                session_calibration_frame_number=12,
-                input_point_count=88,
-                valid_point_count=88,
-                bias_zg_mm=0.01,
-                rmse_zg_mm=0.02,
-                p95_abs_zg_mm=0.03,
-                max_abs_zg_mm=0.04,
-                ground_slope_mm_per_mm=0.001,
-                evaluated_at_utc="2026-01-01T00:00:00+00:00",
-            )
-            merge_session_ground_sanity(path, sanity_payload.as_dict())
             saved = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(saved["status"], "VALID")
         self.assertEqual(saved["detection"]["corner_count"], 88)
-        self.assertEqual(saved["runtime"]["ground_extrinsic_source"], "session")
+        self.assertEqual(saved["runtime"]["ground_extrinsic_source"], "reference")
         self.assertEqual(saved["delta"]["translation_mm"], 5.0)
-        self.assertEqual(saved["laser_ground_sanity"]["status"], "VALID")
-        self.assertEqual(saved["session_calibration_status"], "VALID")
 
 
 class SessionGroundWindowTests(unittest.TestCase):
@@ -128,10 +109,6 @@ class SessionGroundWindowTests(unittest.TestCase):
             self.assertEqual(window._image_view_mode, "fit")
             self.assertGreater(
                 window.control_scroll_area.verticalScrollBar().maximum(), 0
-            )
-            self.assertEqual(
-                window.session_sanity_status_label.text(),
-                "SESSION_CALIBRATION = 未检查",
             )
         finally:
             window.close()
@@ -157,48 +134,72 @@ class SessionGroundWindowTests(unittest.TestCase):
                 self.assertTrue(window.session_ground_button.isEnabled())
                 self.assertFalse(window.start_button.isEnabled())
                 reference_R, reference_t = window._pipeline.reference_ground_extrinsic
+                board = config.session_ground_calibration.board_config()
+                corners = np.asarray(
+                    [
+                        [20.0 + 4.0 * col, 20.0 + 4.0 * row]
+                        for row in range(board.pattern_rows)
+                        for col in range(board.pattern_cols)
+                    ],
+                    dtype=np.float32,
+                )
                 fake_result = SessionGroundExtrinsic(
                     status="success",
                     message="ok",
-                    detected_corners=np.zeros((88, 2), dtype=np.float32),
+                    detected_corners=corners,
                     detection_method="SB",
                     reprojection_rmse_px=0.2,
                     R=reference_R,
                     t=reference_t,
                     T_ground_from_camera=np.eye(4),
                 )
-                with patch(
-                    "online.window.estimate_session_ground_extrinsic",
-                    return_value=fake_result,
-                ):
+                with patch.object(window, "_start_stream_for_session_calibration"):
                     window.calibrate_session_ground()
+
+                final = replace(fake_result, detection_method="5_frame_median")
+                repeatability = SessionGroundRepeatability(
+                    required_frames=5,
+                    accepted_frames=5,
+                    translation_deltas_mm=(0.0,) * 5,
+                    rotation_deltas_deg=(0.0,) * 5,
+                    translation_mean_mm=0.0,
+                    translation_std_mm=0.0,
+                    translation_max_mm=0.0,
+                    rotation_mean_deg=0.0,
+                    rotation_std_deg=0.0,
+                    rotation_max_deg=0.0,
+                )
+                quality = {
+                    "saturation_ratio": 0.0,
+                    "dynamic_range_p95_p5": 100.0,
+                    "edge_margin_px": 20.0,
+                    "warnings": [],
+                }
+                window._session_calibration_frames = [
+                    (
+                        fake_result,
+                        CapturedFrame(
+                            image=np.full((100, 100), 120, dtype=np.uint8),
+                            camera_frame_number=number,
+                            camera_timestamp_ticks=number,
+                            host_timestamp_ns=number,
+                            host_monotonic_ns=1000 + number,
+                            offset_x=0,
+                            offset_y=0,
+                        ),
+                        quality,
+                    )
+                    for number in range(1, 6)
+                ]
+                with patch(
+                    "online.window.aggregate_session_ground_extrinsic",
+                    return_value=(final, repeatability),
+                ):
+                    window._finalize_session_calibration()
+                window._update_control_states()
                 self.assertEqual(window._pipeline.ground_extrinsic_source, "session")
                 self.assertEqual(window.session_ground_valid_label.text(), "VALID")
                 self.assertEqual(window.session_ground_corner_label.text(), "88")
-                self.assertTrue(window.ground_sanity_button.isEnabled())
-                window._update_ground_sanity_display(
-                    GroundSanityResult(
-                        status="VALID",
-                        message="ok",
-                        ground_extrinsic_source="session",
-                        frame_number=2,
-                        session_calibration_frame_number=1,
-                        input_point_count=88,
-                        valid_point_count=88,
-                        bias_zg_mm=0.01,
-                        rmse_zg_mm=0.02,
-                        p95_abs_zg_mm=0.03,
-                        max_abs_zg_mm=0.04,
-                        ground_slope_mm_per_mm=0.001,
-                    )
-                )
-                self.assertEqual(
-                    window.session_sanity_status_label.text(),
-                    "SESSION_CALIBRATION = VALID",
-                )
-                self.assertEqual(
-                    window.session_sanity_valid_count_label.text(), "88 / 88"
-                )
                 self.assertTrue(window.start_button.isEnabled())
                 payload = json.loads(
                     (Path(directory) / "session_ground_calibration.json").read_text(
@@ -210,113 +211,6 @@ class SessionGroundWindowTests(unittest.TestCase):
             finally:
                 window.close()
                 self.application.processEvents()
-
-    def test_ground5c_frozen_load_is_session_bound_and_reuses_raw_frame(self) -> None:
-        frozen_path = (
-            Path(__file__).resolve().parents[2]
-            / "outputs"
-            / "ground5c_frozen_session_linear_0821"
-            / "frozen_session_linear.json"
-        )
-        if not frozen_path.exists():
-            self.skipTest("Ground-5C A-2 output is not present in this checkout")
-
-        window = OnlineCameraWindow(self.base_config, simulate=True)
-        try:
-            window.connect_camera()
-            self.assertFalse(window._has_valid_session_pnp())
-            reference_R, reference_t = window._pipeline.reference_ground_extrinsic
-            window._pipeline.apply_session_ground_extrinsic(
-                reference_R, reference_t, generation=1
-            )
-            window._active_session_ground_result = SessionGroundExtrinsic(
-                status="success",
-                message="ok",
-                R=reference_R,
-                t=reference_t,
-            )
-            window._update_control_states()
-            self.assertTrue(window._has_valid_session_pnp())
-            self.assertTrue(window.frozen_session_ground_button.isEnabled())
-
-            window._session.start()
-            try:
-                frame = window._session.get_frame(window._session.config.timeout_ms)
-            finally:
-                window._session.stop()
-            raw_result = window._pipeline.run_frame(frame)
-            raw_points = raw_result.points_ground.copy()
-            window._last_result = raw_result
-
-            with patch.object(
-                window._pipeline,
-                "run_frame",
-                side_effect=AssertionError("loading must not rerun extraction"),
-            ):
-                self.assertTrue(window.load_frozen_session_ground(frozen_path))
-
-            self.assertIsNotNone(window._last_result)
-            assert window._last_result is not None
-            np.testing.assert_array_equal(window._last_result.points_ground_raw, raw_points)
-            self.assertEqual(window._last_result.ground_reference_source, "ground5c_frozen_session_linear")
-            self.assertEqual(
-                window._last_result.ground_reference_frozen_json_sha256,
-                hashlib.sha256(frozen_path.read_bytes()).hexdigest(),
-            )
-            self.assertRegex(
-                window.ground_reference_runtime_label.text(),
-                r"\d+\s*/\s*\d+",
-            )
-            self.assertLess(len(window.ground_reference_json_sha_label.text()), 40)
-            self.assertIn(
-                hashlib.sha256(frozen_path.read_bytes()).hexdigest(),
-                window.ground_reference_json_sha_label.toolTip(),
-            )
-
-            window.open_frame_analysis()
-            self.application.processEvents()
-            self.assertIsNotNone(window._analysis_window)
-            self.assertIs(
-                window._analysis_window._ground_reference,
-                window._pipeline.session_ground_reference,
-            )
-            window._analysis_window.close()
-            window._analysis_window = None
-
-            with tempfile.TemporaryDirectory() as directory:
-                assert self.base_config.output is not None
-                window._config = replace(
-                    window._config,
-                    output=replace(
-                        window._config.output,
-                        directory=Path(directory),
-                    ),
-                )
-                target = window.export_current_frame()
-                exported = json.loads(
-                    (target / "result.json").read_text(encoding="utf-8")
-                )
-                self.assertEqual(
-                    exported["ground_reference"]["frozen_json_sha256"],
-                    hashlib.sha256(frozen_path.read_bytes()).hexdigest(),
-                )
-                self.assertEqual(
-                    exported["ground_reference_runtime"]["ground_reference_source"],
-                    "ground5c_frozen_session_linear",
-                )
-
-            # The existing PnP invalidation path clears both the runtime
-            # pipeline reference and the GUI's retained reference handle.
-            window._pipeline.apply_session_ground_extrinsic(
-                reference_R, reference_t, generation=2
-            )
-            window._invalidate_ground_reference_for_extrinsic_change("PnP changed")
-            self.assertIsNone(window._pipeline.session_ground_reference)
-            self.assertIsNone(window._last_ground_reference)
-        finally:
-            window.close()
-            self.application.processEvents()
-
 
 if __name__ == "__main__":
     unittest.main()

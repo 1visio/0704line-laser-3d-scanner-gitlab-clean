@@ -83,8 +83,8 @@ class FrameResult:
     ground_reference_valid_s_range_mm: tuple[float, float] | None = None
     ground_reference_applied_count: int = 0
     ground_reference_out_of_range_count: int = 0
-    # Raw C0+C1+ground-extrinsic points are retained for diagnostics such as
-    # Laser Ground Sanity Check; points_ground is the session-reference view.
+    # Raw C0+C1+ground-extrinsic points are retained for diagnostics;
+    # points_ground is the session-reference view.
     points_ground_raw: np.ndarray | None = field(
         default=None, repr=False, compare=False
     )

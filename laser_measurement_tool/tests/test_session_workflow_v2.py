@@ -22,7 +22,6 @@ from calibration.session_ground import (
     SessionGroundExtrinsic,
     estimate_session_ground_extrinsic_from_corners,
 )
-from online.ground_sanity import evaluate_ground_sanity
 from online.models import CameraConfig, CapturedFrame
 from online.session_calibration import (
     SessionGroundRepeatability,
@@ -63,72 +62,73 @@ class SessionWorkflowCoreV2Tests(unittest.TestCase):
         self.assertGreaterEqual(repeatability.translation_max_mm, 0.0)
         self.assertGreaterEqual(repeatability.rotation_max_deg, 0.0)
 
-    def test_host_monotonic_order_survives_camera_frame_number_reset(self) -> None:
-        points = np.column_stack(
-            (
-                np.arange(20, dtype=np.float64),
-                np.zeros(20, dtype=np.float64),
-                np.zeros(20, dtype=np.float64),
-            )
-        )
-        result = evaluate_ground_sanity(
-            points,
-            ground_extrinsic_source="session",
-            frame_number=1,
-            session_calibration_frame_number=999,
-            frame_host_monotonic_ns=200,
-            session_calibration_host_monotonic_ns=100,
-            session_generation=3,
-        )
-
-        self.assertNotIn("laser_on_frame_not_after_session_calibration", result.warnings)
-        self.assertEqual(result.as_dict()["frame"]["session_generation"], 3)
-
-
 class SessionWorkflowWindowV2Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.application = QApplication.instance() or QApplication([])
 
     def test_enter_exit_restores_full_camera_config_and_live_controls_keep_mode(self) -> None:
-        config = load_app_config(DEFAULT_CONFIG_PATH.parent / "measure_tool_daheng_0811.yaml")
-        window = OnlineCameraWindow(config, simulate=True, camera_backend="daheng")
-        try:
-            window.connect_camera()
-            assert window._session is not None
-            original = window._session.config
-            with patch.object(window, "_start_stream_for_session_calibration"):
-                window._enter_session_calibration_mode()
-            self.assertTrue(window._session_calibration_active)
-            self.assertFalse(window._session_calibration_capturing)
-            self.assertEqual(window._session_calibration_attempts, 0)
-            self.assertEqual(window._session_calibration_frames, [])
-            self.assertEqual(
-                window._session.config,
-                CameraConfig(
-                    exposure_us=original.exposure_us,
-                    gain_db=original.gain_db,
-                    pixel_format=original.pixel_format,
-                    offset_x=0,
-                    offset_y=0,
-                    width=4096,
-                    height=3000,
-                    timeout_ms=original.timeout_ms,
-                ),
-            )
+        cases = (
+            ("daheng", "measure_tool_daheng_0811.yaml"),
+            ("mvs", "measure_tool_haikang_0828.yaml"),
+        )
+        for backend, config_name in cases:
+            with self.subTest(camera_backend=backend):
+                config = load_app_config(DEFAULT_CONFIG_PATH.parent / config_name)
+                window = OnlineCameraWindow(
+                    config,
+                    simulate=True,
+                    camera_backend=backend,
+                )
+                try:
+                    window.connect_camera()
+                    assert window._session is not None
+                    original = window._session.config
+                    with patch.object(window, "_start_stream_for_session_calibration"):
+                        window.calibrate_session_ground()
+                    self.assertTrue(window._session_calibration_active)
+                    self.assertFalse(window._session_calibration_capturing)
+                    self.assertEqual(window._session_calibration_attempts, 0)
+                    self.assertEqual(window._session_calibration_frames, [])
+                    full_width = window._pipeline.package.image_width
+                    full_height = window._pipeline.package.image_height
+                    self.assertEqual(
+                        (window._session.config.width, window._session.config.height),
+                        (full_width, full_height),
+                    )
+                    if backend == "mvs":
+                        self.assertEqual((full_width, full_height), (2448, 2048))
+                    self.assertEqual(window._session.config.offset_x, 0)
+                    self.assertEqual(window._session.config.offset_y, 0)
+                    self.assertEqual(
+                        window._session.config,
+                        CameraConfig(
+                            exposure_us=original.exposure_us,
+                            gain_db=original.gain_db,
+                            pixel_format=original.pixel_format,
+                            offset_x=0,
+                            offset_y=0,
+                            width=full_width,
+                            height=full_height,
+                            timeout_ms=original.timeout_ms,
+                        ),
+                    )
 
-            window.exposure.setValue(777.0)
-            window._apply_session_calibration_camera_controls()
-            self.assertTrue(window._session_calibration_active)
-            self.assertEqual(window._session.config.exposure_us, 777.0)
-            self.assertEqual(window._session.config.width, 4096)
+                    window.exposure.setValue(777.0)
+                    window._apply_session_calibration_camera_controls()
+                    self.assertTrue(window._session_calibration_active)
+                    self.assertEqual(window._session.config.exposure_us, 777.0)
+                    self.assertEqual(
+                        (window._session.config.width, window._session.config.height),
+                        (full_width, full_height),
+                    )
 
-            window._exit_session_calibration_mode()
-            self.assertFalse(window._session_calibration_active)
-            self.assertEqual(window._session.config, original)
-        finally:
-            window.close()
-            self.application.processEvents()
+                    window._exit_session_calibration_mode()
+                    self.assertFalse(window._session_calibration_active)
+                    self.assertEqual(window._session.config, original)
+                finally:
+                    window.close()
+                    self.application.processEvents()
 
     def test_session_preview_requires_explicit_capture_button_gate(self) -> None:
         config = load_app_config(DEFAULT_CONFIG_PATH)
@@ -197,15 +197,17 @@ class SessionWorkflowWindowV2Tests(unittest.TestCase):
             window.close()
             self.application.processEvents()
 
-    def test_five_accepted_frames_update_overlay_and_runtime_session(self) -> None:
+    def test_mvs_five_accepted_frames_update_overlay_and_runtime_session(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            base = load_app_config(DEFAULT_CONFIG_PATH)
+            base = load_app_config(
+                DEFAULT_CONFIG_PATH.parent / "measure_tool_haikang_0828.yaml"
+            )
             assert base.output is not None
             config = replace(
                 base,
                 output=replace(base.output, directory=directory),
             )
-            window = OnlineCameraWindow(config, simulate=True, camera_backend="daheng")
+            window = OnlineCameraWindow(config, simulate=True, camera_backend="mvs")
             try:
                 window.connect_camera()
                 window._session_calibration_active = True

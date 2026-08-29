@@ -94,7 +94,10 @@ class CameraStartupConfig:
 
 @dataclass(frozen=True, slots=True)
 class SessionGroundSanityConfig:
-    """Session 棋盘基准面激光一致性检查的诊断阈值。"""
+    """Legacy diagnostic thresholds retained for offline fitting scripts.
+
+    The online window no longer exposes or executes the ground-sanity check.
+    """
 
     mask_enabled: bool = True
     mask_inset_mm: float = 0.0

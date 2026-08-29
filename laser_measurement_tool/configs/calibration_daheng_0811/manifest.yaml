@@ -27,7 +27,7 @@ files:
     sha256: 5288995685c7703e8e62437e0becc1ede008040dbb2d3c60f1d0119edf1b8700
   extrinsics:
     path: camera_ground_extrinsics.yaml
-    sha256: 661087ac4ab93a5bda07a2e722f506760cdce71d0a1f0d24ce0dd5b5151b5d0e
+    sha256: d60ebfa3e3e60ed204c2654ec40ae7f6d73fb9b618da445556d6127b4dac844f
   ground_u_compensation: null
   laser_ray_correction:
     path: frozen_c1_4k.json

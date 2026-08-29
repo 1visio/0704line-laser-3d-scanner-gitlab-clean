@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>图像显示界面改动说明</title>
+  <style>
+    body { max-width: 960px; margin: 32px auto; padding: 0 24px; color: #202124; font: 16px/1.65 sans-serif; }
+    h1, h2 { color: #174ea6; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #dadce0; padding: 8px 12px; text-align: left; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0; }
+    .node { border: 2px solid #4285f4; border-radius: 8px; padding: 10px 14px; background: #e8f0fe; }
+    .api { border-color: #188038; background: #e6f4ea; }
+    .arrow { font-size: 24px; color: #5f6368; }
+  </style>
+</head>
+<body>
+  <h1>图像显示界面改动说明</h1>
+  <h2>图例</h2>
+  <table>
+    <tr><th>样式</th><th>含义</th></tr>
+    <tr><td>蓝色节点</td><td>图像加载与 GUI 显示流程</td></tr>
+    <tr><td>绿色节点</td><td>后续算法及 ROI 扩展接口</td></tr>
+  </table>
+  <h2>主要改动</h2>
+  <ul>
+    <li>左侧图像视图支持灰度图显示、滚轮缩放和左键拖动平移。</li>
+    <li>显式提供视口坐标与图像坐标的双向转换。</li>
+    <li>右侧提供六个操作按钮，算法和 ROI 功能通过信号解耦。</li>
+    <li>原始位深数据与归一化显示副本相互分离。</li>
+  </ul>
+  <h2>代码流程图</h2>
+  <div class="flow">
+    <div class="node">加载图像</div><div class="arrow">→</div>
+    <div class="node">OpenCV 解码与校验</div><div class="arrow">→</div>
+    <div class="node">保存原始数组</div><div class="arrow">→</div>
+    <div class="node">ImageView 显示</div><div class="arrow">→</div>
+    <div class="node">缩放、平移、坐标转换</div>
+  </div>
+  <div class="flow">
+    <div class="node api">算法与 ROI 按钮</div><div class="arrow">→</div>
+    <div class="node api">Qt 信号接口</div><div class="arrow">→</div>
+    <div class="node api">后续控制器 / 算法模块</div>
+  </div>
+</body>
+</html>

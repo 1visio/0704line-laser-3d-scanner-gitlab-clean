@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>标定配置加载器说明</title>
+  <style>
+    body { max-width: 960px; margin: 32px auto; padding: 0 24px; color: #202124; font: 16px/1.65 sans-serif; }
+    h1, h2 { color: #174ea6; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #dadce0; padding: 8px 12px; text-align: left; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0; }
+    .node { border: 2px solid #4285f4; border-radius: 8px; padding: 10px 14px; background: #e8f0fe; }
+    .optional { border-color: #f9ab00; background: #fef7e0; }
+    .output { border-color: #188038; background: #e6f4ea; }
+    .arrow { color: #5f6368; font-size: 24px; }
+    code { background: #f1f3f4; padding: 2px 5px; }
+  </style>
+</head>
+<body>
+  <h1>标定配置加载器说明</h1>
+  <h2>图例</h2>
+  <table>
+    <tr><th>样式</th><th>含义</th></tr>
+    <tr><td>蓝色</td><td>必需配置及校验步骤</td></tr>
+    <tr><td>黄色</td><td>可选 U 补偿配置</td></tr>
+    <tr><td>绿色</td><td>统一 NumPy 标定字典</td></tr>
+  </table>
+  <h2>输入与输出</h2>
+  <table>
+    <tr><th>文件</th><th>参数</th><th>输出形状</th></tr>
+    <tr><td>camera_intrinsics.yaml</td><td>K, D</td><td>(3,3), (N,)</td></tr>
+    <tr><td>laser_plane.yaml</td><td>plane_abcd</td><td>(4,)</td></tr>
+    <tr><td>camera_ground_extrinsics.yaml</td><td>R, t</td><td>(3,3), (3,)</td></tr>
+    <tr><td>ground_bias_table.csv / ground_u_compensation.yaml</td><td>column_u_px, bias_mm</td><td>(N,), (N,)</td></tr>
+  </table>
+  <h2>流程图</h2>
+  <div class="flow">
+    <div class="node">读取 YAML</div><div class="arrow">→</div>
+    <div class="node">文件/单位检查</div><div class="arrow">→</div>
+    <div class="node">维度与有限值检查</div><div class="arrow">→</div>
+    <div class="node output">NumPy calibration dictionary</div>
+  </div>
+  <div class="flow">
+    <div class="node optional">可选 CSV/YAML U 补偿</div><div class="arrow">→</div>
+    <div class="node">校验递增 u 与 bias</div><div class="arrow">→</div>
+    <div class="node output">column_u_px + bias_mm 或 None</div>
+  </div>
+</body>
+</html>

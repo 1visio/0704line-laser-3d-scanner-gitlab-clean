@@ -184,27 +184,11 @@ session_ground_calibration:
     saturation_ratio_warn: 0.05
     dynamic_range_p95_p5_warn: 20.0
     edge_margin_warn_px: 20.0
-  sanity:
-    mask_enabled: true
-    mask_inset_mm: 0.0        # 完整物理边界；0 mm，不做腐蚀/膨胀
-    min_valid_points: 20
-    max_abs_bias_mm: 2.0
-    max_rmse_mm: 2.0
-    max_p95_abs_mm: 3.0
-    max_abs_mm: 5.0
-    max_abs_slope_mm_per_mm: 0.02
 ```
 
 `required` 模式下必须先连接相机、进入“Session 基准标定”预览，调好曝光后点击“采集 PnP 棋盘格（5 帧）”并获得 `VALID`，再开始
 在线重建；`disabled` 始终使用 reference。在线结果 JSON 会记录
 `ground_extrinsic_source: reference/session`。
-
-点击“激光地面一致性检查”前保持棋盘不动并打开激光。该检查会复用 Session PnP 的
-pose、内参和畸变，投影完整棋盘物理边界生成 mask，先筛选源像素位于 mask 内的
-重建点，再统计当前正式链路的原始 `Zg`，默认至少 20 个有限点；阈值超限时报警并写入
-`session_ground_calibration.json.laser_ground_sanity`，不会自动做 bias offset、
-`a*S+b` 拟合或 Surface correction。检查要求当前在线处理算法为 `steger`，并且
-`reconstruction.enable_laser_ray_correction: true`。
 
 `image_roi_polygon` 是在线重建前的像素门控。启用时，只有多边形内部的激光
 中心点才会进入射线-激光表面求交，结果中的 `filtered.outside_image_roi` 会记录

@@ -1,0 +1,42 @@
+schema_version: 1
+package_id: haikang-mv-cs050-60gm-20260828-circular-cone-base-v1
+
+camera:
+  model: MV-CS050-60GM
+  image_width: 2448
+  image_height: 2048
+
+extractor:
+  algorithm: steger
+  settings:
+    scan_axis: column
+    sigma_px: 1.5
+    threshold: 30.0
+    deriv_thresh: 0.5
+
+files:
+  intrinsics:
+    path: calibration_result.yaml
+    sha256: 67096b04a678e0d45c750e5a0cd0883e4f5e72b2bffde165221494e60695f917
+  laser_plane:
+    path: circular_cone.yaml
+    sha256: cd0b4fe87c4ba496346efdeef9a3e14fde36f21e0f205f8c0e1f2247cfa6ee7a
+  extrinsics:
+    path: camera_ground_extrinsics.yaml
+    sha256: 3b938ebadb5685f15a9ef570718f23060dbfa7c70e5afb927e1b5bbbcf5c7dc5
+  ground_u_compensation: null
+
+quality:
+  source: calibration_tool/projects/haikang/otutputs/0828
+  camera_serial_number: DA7711077
+  intrinsics_fit_rms_px: 0.10755866765975952
+  intrinsics_test_rmse_px: 0.10029572248458862
+  laser_model: circular_cone
+  laser_board_validation_rmse_mm: 0.13637932917452708
+  laser_board_validation_p95_abs_mm: 0.25176227466754425
+  ground_validation_rmse_mm: 0.0656368254396831
+  ground_validation_p95_abs_mm: 0.1228353097992283
+  model_z_valid_range_mm:
+    - 734.7746878578992
+    - 852.5871576846438
+  correction_mode: none

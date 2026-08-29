@@ -1,0 +1,278 @@
+schema_version: 2
+generated_utc: '2026-08-28T03:26:27.253507+00:00'
+method: checkerboard_plane_only
+units: mm
+coordinate_convention:
+  Xg: camera +X projected onto checkerboard reference plane; approximately image right
+  Yg: Zg cross Xg; approximately image up
+  Zg: checkerboard reference-plane normal toward camera; positive for protrusions
+  origin: intersection of camera principal axis and checkerboard pattern plane
+  zero_surface: checkerboard pattern surface
+T_ground_from_camera:
+- - 0.9999227675863772
+  - -0.00017195239495385218
+  - 0.01242695838786965
+  - -10.562483882553952
+- - -5.421010862427523e-20
+  - -0.9999042818235928
+  - -0.01383572155130176
+  - 11.75988374047995
+- - 0.012428147987531134
+  - 0.013834652985132138
+  - -0.9998270568025157
+  - 849.8183419626255
+- - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+T_camera_from_ground:
+- - 0.9999227675863771
+  - -2.7107147862593467e-20
+  - 0.012428147987531134
+  - 0.0
+- - -0.00017195239495385213
+  - -0.9999042818235926
+  - 0.013834652985132138
+  - -0.0
+- - 0.012426958387869648
+  - -0.013835721551301758
+  - -0.9998270568025158
+  - 849.9653376858757
+- - 0.0
+  - 0.0
+  - 0.0
+  - 1.0
+ground_plane_in_camera:
+  equation: n_x*Xc + n_y*Yc + n_z*Zc + D = 0
+  coefficients:
+  - 0.012428147987531134
+  - 0.013834652985132138
+  - -0.9998270568025157
+  - 849.8183419626255
+  normal:
+  - 0.012428147987531134
+  - 0.013834652985132138
+  - -0.9998270568025157
+  D_mm: 849.8183419626255
+ground_origin_in_camera_mm:
+- 0.0
+- -0.0
+- 849.9653376858757
+ground_axes_in_camera:
+  Xg:
+  - 0.9999227675863772
+  - -0.00017195239495385218
+  - 0.01242695838786965
+  Yg:
+  - -5.421010862427523e-20
+  - -0.9999042818235928
+  - -0.01383572155130176
+  Zg:
+  - 0.012428147987531134
+  - 0.013834652985132138
+  - -0.9998270568025157
+camera_installation:
+  optical_axis_to_ground_normal_deg: 1.0656034835540553
+  optical_axis_to_ground_plane_deg: 88.93439651644594
+  camera_perpendicular_distance_to_pattern_plane_mm: 849.8183419626255
+  principal_axis_intersection_zc_mm: 849.9653376858757
+quality_checks:
+  rotation_orthogonality_frobenius: 2.220498276184212e-16
+  rotation_determinant: 1.0
+  transform_inverse_frobenius: 1.110765412264633e-16
+  fit_zg:
+    point_count: 704
+    mean_mm: -2.0008237491062822e-13
+    median_mm: -0.002733245765682568
+    std_mm: 0.07318160672314403
+    rmse_mm: 0.07318160672314403
+    p95_abs_mm: 0.13963575939935144
+    max_abs_mm: 0.20427278400359228
+    min_mm: -0.17189489521558698
+    max_mm: 0.20427278400359228
+  validation_zg:
+    point_count: 264
+    mean_mm: 0.02077948561276516
+    median_mm: 0.02514501890578913
+    std_mm: 0.06226078887605198
+    rmse_mm: 0.0656368254396831
+    p95_abs_mm: 0.1228353097992283
+    max_abs_mm: 0.1549747653199347
+    min_mm: -0.1467980518926879
+    max_mm: 0.1549747653199347
+fit_selection:
+  detected_frame_count: 8
+  accepted_frame_count: 8
+  normal_outlier_threshold_deg: 0.19973079010657896
+  plane_distance_median_mm: 849.8756809934093
+  plane_distance_outlier_threshold_mm: 0.09735029473211661
+  frames:
+  - image: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit\chess
+      001.tif
+    detection_method: SB
+    reprojection_rmse_px: 0.0757998675107956
+    normal_camera:
+    - 0.013179054735331982
+    - 0.014500942809455826
+    - -0.9998079991547978
+    plane_d_mm: 849.8920444270378
+    normal_angular_error_deg: 0.03522058407071545
+    plane_distance_error_mm: 0.01636343362849857
+    accepted: true
+  - image: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit\chess
+      002.tif
+    detection_method: SB
+    reprojection_rmse_px: 0.07786886394023895
+    normal_camera:
+    - 0.013249365878801543
+    - 0.014534549018521307
+    - -0.9998065818890362
+    plane_d_mm: 849.8560660373927
+    normal_angular_error_deg: 0.03963283556880579
+    plane_distance_error_mm: 0.019614956016653196
+    accepted: true
+  - image: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit\chess
+      003.tif
+    detection_method: SB
+    reprojection_rmse_px: 0.08058329671621323
+    normal_camera:
+    - 0.011641933834798628
+    - 0.014346031077543005
+    - -0.9998293138175678
+    plane_d_mm: 849.8079534511442
+    normal_angular_error_deg: 0.06028742518361682
+    plane_distance_error_mm: 0.06772754226517463
+    accepted: true
+  - image: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit\chess
+      004.tif
+    detection_method: SB
+    reprojection_rmse_px: 0.08687841147184372
+    normal_camera:
+    - 0.013034249210376218
+    - 0.013903328909897436
+    - -0.9998183864046235
+    plane_d_mm: 849.8611772775281
+    normal_angular_error_deg: 0.02490525598876421
+    plane_distance_error_mm: 0.014503715881232893
+    accepted: true
+  - image: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit\chess
+      005.tif
+    detection_method: SB
+    reprojection_rmse_px: 0.09477963298559189
+    normal_camera:
+    - 0.01295244176446422
+    - 0.012968566642576753
+    - -0.9998320111556618
+    plane_d_mm: 849.8901847092905
+    normal_angular_error_deg: 0.06945625554965394
+    plane_distance_error_mm: 0.014503715881119206
+    accepted: true
+  - image: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit\chess
+      006.tif
+    detection_method: SB
+    reprojection_rmse_px: 0.07788927853107452
+    normal_camera:
+    - 0.01202171944464741
+    - 0.01363131218683321
+    - -0.9998348191524735
+    plane_d_mm: 849.8189591909534
+    normal_angular_error_deg: 0.04777313035270288
+    plane_distance_error_mm: 0.05672180245596792
+    accepted: true
+  - image: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit\chess
+      007.tif
+    detection_method: SB
+    reprojection_rmse_px: 0.09164845198392868
+    normal_camera:
+    - 0.012210025710226488
+    - 0.01479885970886418
+    - -0.9998159375722478
+    plane_d_mm: 849.91018315611
+    normal_angular_error_deg: 0.04581380304679808
+    plane_distance_error_mm: 0.03450216270061901
+    accepted: true
+  - image: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit\chess
+      008.tif
+    detection_method: SB
+    reprojection_rmse_px: 0.06988319009542465
+    normal_camera:
+    - 0.013114583973676179
+    - 0.014505697502517638
+    - -0.9998087779306416
+    plane_d_mm: 849.8935871083808
+    normal_angular_error_deg: 0.032434051855854004
+    plane_distance_error_mm: 0.01790611497142436
+    accepted: true
+  failures: []
+validation:
+  detected_frame_count: 3
+  metrics:
+    point_count: 264
+    mean_mm: 0.02077948561276516
+    median_mm: 0.02514501890578913
+    std_mm: 0.06226078887605198
+    rmse_mm: 0.0656368254396831
+    p95_abs_mm: 0.1228353097992283
+    max_abs_mm: 0.1549747653199347
+    min_mm: -0.1467980518926879
+    max_mm: 0.1549747653199347
+  frames:
+  - image: chess 009.tif
+    detection_method: SB
+    pnp_rmse_px: 0.07375246286392212
+    normal_x: 0.013028574132893399
+    normal_y: 0.013422800603450791
+    normal_z: -0.9998250270322422
+    plane_d_mm: 849.8214446155188
+    zg_point_count: 88
+    zg_mean_mm: 0.029215834897498058
+    zg_median_mm: 0.02921583489751356
+    zg_std_mm: 0.03422931611472249
+    zg_rmse_mm: 0.04500234538820689
+    zg_p95_abs_mm: 0.08215007718417837
+    zg_max_abs_mm: 0.09621016354515177
+    zg_min_mm: -0.03777849375012465
+    zg_max_mm: 0.09621016354515177
+  - image: chess 010.tif
+    detection_method: SB
+    pnp_rmse_px: 0.06765376031398773
+    normal_x: 0.013588812944577191
+    normal_y: 0.014196621412441629
+    normal_z: -0.9998068814042187
+    plane_d_mm: 849.8993870026698
+    zg_point_count: 88
+    zg_mean_mm: -0.010046663899070102
+    zg_median_mm: -0.010046663899117902
+    zg_std_mm: 0.07609573437594251
+    zg_rmse_mm: 0.07675608279292839
+    zg_p95_abs_mm: 0.12659233818704366
+    zg_max_abs_mm: 0.1467980518926879
+    zg_min_mm: -0.1467980518926879
+    zg_max_mm: 0.1267047240945658
+  - image: chess 011.tif
+    detection_method: SB
+    pnp_rmse_px: 0.07573136687278748
+    normal_x: 0.012764352554217668
+    normal_y: 0.012969137450452724
+    normal_z: -0.9998344226809072
+    plane_d_mm: 849.8334766897176
+    zg_point_count: 88
+    zg_mean_mm: 0.043169285839867524
+    zg_median_mm: 0.04316928583983781
+    zg_std_mm: 0.056073915373547494
+    zg_rmse_mm: 0.07076631419852211
+    zg_p95_abs_mm: 0.13069392465340002
+    zg_max_abs_mm: 0.1549747653199347
+    zg_min_mm: -0.0686361936401454
+    zg_max_mm: 0.1549747653199347
+  failures: []
+inputs:
+  intrinsics: D:\Docs\linelaserscan\calibration_tool\projects\haikang\runs\20260828\intrinsics\calibration_result.yaml
+  fit_dir: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\fit
+  validation_dir: D:\Docs\linelaserscan\calibration_tool\projects\haikang\data\waican\validation
+  fit_glob: chess *.tif
+  validation_glob: chess *.tif
+  pattern_cols: 11
+  pattern_rows: 8
+  square_size_mm: 20.0
+  zero_surface: checkerboard pattern surface

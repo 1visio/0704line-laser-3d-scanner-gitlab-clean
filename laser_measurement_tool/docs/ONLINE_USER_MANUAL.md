@@ -280,23 +280,6 @@ Session Ground correction 掩盖 PnP 误差。
 `optional`（开发默认）允许直接使用 reference；`required` 需要先连接相机并完成
 Session 标定，之后才允许开始在线重建；`disabled` 隐藏该入口并始终使用 reference。
 
-### 4.5 Laser Ground Sanity Check
-
-Session PnP 成功后，退出标定模式会自动恢复测量参数；随后可切换到适合激光的曝光，
-保持棋盘不动并打开激光，点击“激光地面一致性检查”。
-在线取流时必须等待 Session 外参生效后的新帧；停流时按钮会单独采集一帧并调用同一
-正式链路：`Steger → Frozen C0 → Frozen C1 → Session ground extrinsic`。
-如果当前处理下拉框不是 `steger`，检查按钮会拒绝执行；请停流切回 `steger` 后重新开始。
-配置还必须启用当前 Daheng 的 Frozen C1；否则检查会拒绝执行。
-
-GUI 会显示 `SESSION_CALIBRATION = VALID/INVALID`、Bias Zg、RMSE、P95、Max、
-ground slope 和有效点数。默认至少需要 20 个有限点；异常只报警，不自动减 Bias、
-不拟合 `a*S+b`，也不执行 Surface correction 或 Stage-A。
-
-检查结果会合并保存到 `session_ground_calibration.json` 的
-`laser_ground_sanity` 节点，并记录 `ground_extrinsic_source`、camera 帧号、
-host monotonic 时间和正式链路；时序判断不依赖会在 stop/start 后重置的 camera 帧号。
-
 ## 5. FPS、处理耗时与丢帧解释
 
 实时状态中的几个数值不是同一个概念：
@@ -398,7 +381,7 @@ laser_measurement_tool/output/online_recordings/recording_YYYYMMDD_HHMMSS/
 - 多个障碍物区域不会合并，每个区域独立拟合高度线；
 - 添加基准区域后，如果区域内没有有效激光点，工具会报错并要求重新框选，不会静默退回固定零基准；
 - 添加基准区域时，单帧测量优先使用所选区域拟合局部地面并计算障碍物相对高度；该拟合只作用于当前单帧，不会修改在线 Session 或全局标定；
-- 完全不添加基准区域时，离线窗口使用固定 `Zg=0`；在线窗口若已有 Frozen Session `physical_S`，则使用该 Session 地面参考，否则使用固定 `Zg=0`。没有局部基准拟合时，地面噪声和基准线夹角显示为 `—`；
+- 完全不添加基准区域时，离线窗口使用固定 `Zg=0`；在线窗口若已有 Session 激光地面基准，则使用该 Session 地面参考，否则使用固定 `Zg=0`。没有局部基准拟合时，地面噪声和基准线夹角显示为 `—`；
 - `min_baseline_points` 和 `min_height_points` 默认都是 `20`。点数指“经过提取、ROI 筛选、三维重建和有效性过滤后”的点，不是框内肉眼可见的绿色像素数量。
 
 因此，看到激光线很长但提示“height line has too few points”时，先检查 ROI 是否框在绿色中心线上、是否选错了坐标偏移、是否被重建深度/模型范围过滤，再考虑降低点数门槛。
@@ -423,7 +406,7 @@ laser_measurement_tool/output/online_recordings/recording_YYYYMMDD_HHMMSS/
 - 地面基准 `Zg`；
 - 地面噪声 `σ`；
 - 基准线内点数/总点数，或 Session/固定 `Zg=0` 状态；
-- 地面参考模式：基准 ROI 地面拟合、Frozen Session `physical_S` 或固定 `Zg=0`。
+- 地面参考模式：基准 ROI 地面拟合、Session 激光地面基准或固定 `Zg=0`。
 
 每个障碍物显示：
 
@@ -518,24 +501,10 @@ session_ground_calibration:
     saturation_ratio_warn: 0.05
     dynamic_range_p95_p5_warn: 20.0
     edge_margin_warn_px: 20.0
-  sanity:
-    mask_enabled: true
-    mask_inset_mm: 0.0         # 完整物理边界；0 mm，不做腐蚀/膨胀
-    min_valid_points: 20
-    max_abs_bias_mm: 2.0
-    max_rmse_mm: 2.0
-    max_p95_abs_mm: 3.0
-    max_abs_mm: 5.0
-    max_abs_slope_mm_per_mm: 0.02
 ```
 
 该 JSON 是独立的运行记录，重复标定只更新这个 JSON；不会覆盖
 `calibration/camera_ground_extrinsics.yaml`。
-
-点击“激光地面一致性检查”后，工具会自动复用 Session PnP 的 pose、内参和畸变，
-投影完整棋盘物理边界生成 mask，并只统计 mask 内的激光重建点。默认使用完整
-12×9 方格边界，不做像素腐蚀/膨胀；mask 不可用时检查直接标记 `INVALID`，不会
-退回整帧统计。
 
 ### 9.4 激光提取配置
 

@@ -17,11 +17,7 @@
 |---|---|
 | [在线实时工具用户手册](laser_measurement_tool/docs/ONLINE_USER_MANUAL.md) | 安装启动、界面操作、相机参数、曝光/ROI、FPS、单帧测量、标定配置、导出和故障排查 |
 | [实时工具模块说明](laser_measurement_tool/README.md) | 实时处理模块、配置字段、测试和开发说明 |
-| [海康 0829 三段人工 ROI 冻结](laser_measurement_tool/docs/HAIKANG_0829_MANUAL_ROI_ANNOTATION.md) | 50 个 condition 的 geometry-only 代表视图、人工选择、续标与冻结输出 |
-| [海康 0829 冻结人工 ROI C0 重放](laser_measurement_tool/docs/HAIKANG_0829_MANUAL_ROI_C0_REPLAY.md) | 使用冻结 ROI 绕过自动 target detection 的 C0 + Session Ground 诊断重放 |
-| [海康 0829 H1 可行性审计](laser_measurement_tool/docs/HAIKANG_0829_H1_FEASIBILITY.md) | condition-level LOHO、端点外推和 LOPO 的 H1 feasibility 诊断 |
 | [仓库目录职责与整理约定](docs/REPOSITORY_STRUCTURE.md) | 每个目录放什么、主线/历史/产物边界、实验结果归档与清理规则 |
-| [标定工具仓库](https://github.com/1visio/calibration_tool) | 相机内参、外参、激光模型和地面补偿配置的生成与验证 |
 
 第一次使用时请先阅读[在线实时工具用户手册](laser_measurement_tool/docs/ONLINE_USER_MANUAL.md)，不要直接根据旧工程文档配置真实设备。
 

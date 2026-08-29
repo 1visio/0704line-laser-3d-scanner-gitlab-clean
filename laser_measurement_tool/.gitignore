@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.log
+
+# Local acquisition data and generated runtime results.
+data/
+output/
+outputs/
+recordings/

@@ -1,0 +1,33 @@
+schema_version: 1
+package_id: mv-cs050-60gm-runtime-20260731-v2-circular-cone
+camera:
+  model: MV-CS050-60GM
+  image_width: 2448
+  image_height: 2048
+extractor:
+  algorithm: shared_steger
+  settings:
+    sigma_px: 1.2
+    max_offset_px: 0.75
+    min_normal_y: 0.5
+    min_response_ratio: 0.0005
+    background_window_px: 31
+    background_percentile: 20.0
+    min_prominence_ratio: 0.010
+    profile_smoothing_sigma_px: 0.8
+files:
+  intrinsics:
+    path: calibration_result.yaml
+    sha256: f19e5a223a9e31799fe5df2346d521a433d059b08ab8b81a38b98fb4c9b5ff13
+  laser_plane:
+    path: circular_cone.yaml
+    sha256: 40b20ec9bac5597acdd44ed648a10b5ae2068f5900b2a091853f6811cf7bd5dd
+  extrinsics:
+    path: camera_ground_extrinsics.yaml
+    sha256: e8e9479a83b4cf20fc65ed110303883c8df9fcad2a2c96e4d5aaaeca6fe40c07
+  ground_u_compensation: null
+quality:
+  intrinsics_rms_px: 0.101893779
+  laser_plane_rmse_mm: 0.148929
+  laser_plane_p95_mm: 0.321439
+  camera_height_mm: 711.942

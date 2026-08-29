@@ -1,0 +1,35 @@
+schema_version: 1
+package_id: mv-cs050-60gm-runtime-20260731-v1
+camera:
+  model: MV-CS050-60GM
+  image_width: 2448
+  image_height: 2048
+extractor:
+  algorithm: shared_steger
+  settings:
+    sigma_px: 1.2
+    max_offset_px: 0.75
+    min_normal_y: 0.5
+    min_response_ratio: 0.0005
+    background_window_px: 31
+    background_percentile: 20.0
+    min_prominence_ratio: 0.010
+    profile_smoothing_sigma_px: 0.8
+files:
+  intrinsics:
+    path: camera_intrinsics.yaml
+    sha256: 8e17d1c86085e406568172cd89a6115888b9beeded829b18334e3564fb15976a
+  laser_plane:
+    path: laser_plane.yaml
+    sha256: b08b88abcd1793fcd25b73ba703d303deb6209e27386b17e76d90a3b0aa39054
+  extrinsics:
+    path: camera_ground_extrinsics.yaml
+    sha256: ef80ef2c4adf111366da1dce647bb27f80087947d51e3c95ab521aad87b7bc18
+  ground_u_compensation:
+    path: ground_u_compensation.csv
+    sha256: 4b14655a4d0fa0d9acafdd13dc27683bcfc3106f26da34639729ac69a1ffdbc5
+quality:
+  intrinsics_rms_px: 0.109626
+  laser_plane_rmse_mm: 0.142713
+  laser_plane_p95_mm: 0.271260
+  camera_height_mm: 711.942

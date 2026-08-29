@@ -1,0 +1,13 @@
+# Runtime ground extrinsics bundled with this tool snapshot.
+schema_version: 1
+units: mm
+coordinate_convention:
+  Xg: camera +X projected onto ground; approximately image right
+  Zg: ground normal toward camera; positive for protrusions
+  Yg: Zg cross Xg; approximately image up
+  origin: intersection of camera principal axis and ground plane
+T_ground_from_camera:
+  - [0.9999974593961868, -1.4640223003458356e-05, -0.0022541044420844366, 1.604829925389028]
+  - [-1.6940658945086007e-21, -0.999978908688844, 0.006494780786830639, -4.624017579198343]
+  - [-0.002254151985105348, -0.006494764286165805, -0.9999763681386152, 711.9421666134897]
+  - [0.0, 0.0, 0.0, 1.0]

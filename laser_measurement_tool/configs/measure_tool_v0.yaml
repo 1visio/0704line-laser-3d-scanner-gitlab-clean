@@ -1,0 +1,70 @@
+# 单帧线激光高度测量工具 · 统一配置
+# ------------------------------------------------------------------
+# 相对路径一律相对于本文件所在目录（laser_measurement_tool/configs/）解析。
+# 当前标定已随工具保存在 calibration/；字段详解见 ../docs/USAGE_CONFIG.md。
+
+schema_version: 1
+
+camera:
+  exposure_us: 600.0
+  gain_db: 0.0
+  pixel_format: Mono8
+  offset_x: 0
+  offset_y: 800
+  width: 2440
+  height: 300
+  timeout_ms: 2000
+
+calibration:
+  manifest: calibration/manifest.yaml
+  # 相机内参：需含 camera_matrix(3x3) 与 dist_coeffs(4/5/8/12/14 个)
+  intrinsics: calibration/camera_intrinsics.yaml
+  # 激光平面（相机系，mm）：支持 coefficients/plane/plane_abcd 三种写法
+  laser_plane: calibration/laser_plane.yaml
+  # 地面外参：支持 R+t 或 T_ground_from_camera(4x4)
+  extrinsics: calibration/camera_ground_extrinsics.yaml
+  # 可选 U 补偿：支持 validation v2 的 CSV，关闭时改为 null
+  ground_u_compensation: calibration/ground_u_compensation.csv
+
+extraction:
+  # 标定与在线统一使用实时 Steger；参数集中在同目录 realtime_steger.yaml
+  method: steger
+  profile: realtime_steger.yaml
+  centroid:
+    background_kernel: 51            # 背景抑制高斯核（奇数，像素）
+    min_local_contrast_dn: 20.0      # 峰值最低局部对比度（DN，按源位深）
+    centroid_window_radius: 5        # 重心窗口半径（像素）
+    segment_min_columns: 42          # 分段最少列数，短段视为噪声丢弃
+    continuity_max_column_gap: 2     # 分段允许的最大列间隔
+    continuity_max_vertical_jump: 14.0  # 分段允许的最大纵向跳变（像素）
+    correction_window: 7             # 段内加权平滑窗口（正奇数；1=关闭）
+    correction_max_shift: 3.5        # 平滑允许的最大位移（像素）
+    scan_axis: column                # column=条纹接近水平；row=条纹接近竖直
+  steger:
+    search_roi:                     # 海康全幅传感器坐标中的算法搜索 ROI
+      offset_x: 0
+      offset_y: 800
+      width: 2440
+      height: 300
+  shared_steger:
+    {}                              # 历史名称兼容别名，实际参数来自同一 profile
+
+reconstruction:
+  parallel_epsilon: 1.0e-9           # 射线与激光平面近平行判据
+  min_camera_depth_mm: 100.0         # 工作距离下限（相机系 Zc，mm）
+  max_camera_depth_mm: 1500.0        # 工作距离上限（相机系 Zc，mm）
+  # 可选固定姿态棋盘格 ROI，填写原始图像像素四边形：[[u1,v1], ...]。
+  # null 表示全幅重建；仅在棋盘格姿态固定时启用，动态姿态不要复用该多边形。
+  image_roi_polygon: null
+
+measurement:
+  outlier_sigma_multiplier: 2.0      # 残差超过该倍数稳健 σ 的点被剔除
+  outlier_max_iterations: 5          # 离群点剔除最大迭代次数
+  min_baseline_points: 20            # 基准线最少点数
+  min_height_points: 20              # 高度线最少点数
+
+output:
+  dir: ../output                     # 结果输出目录
+  save_pointcloud_csv: true          # 保存基准/高度线点云 CSV
+  save_overlay_png: true             # 保存叠加渲染图 PNG
+  save_full_pointcloud_ply: true     # 保存整幅激光线地面系 PLY（含 Zg 映射 RGB）

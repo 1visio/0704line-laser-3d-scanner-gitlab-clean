@@ -1,0 +1,20 @@
+schema_version: 1
+source_calibration_run: calibration_tool/projects/daheng/outputs/0811
+camera_model: Daheng ME2P-1230
+image_width: 4096
+image_height: 3000
+units: px
+camera_matrix:
+- [7347.865114440015, 0.0, 2070.216530147837]
+- [0.0, 7348.841146643875, 1512.4364541050136]
+- [0.0, 0.0, 1.0]
+dist_coeffs:
+- -0.049137165151413566
+- 0.2272759720228212
+- -0.0005131542263022916
+- -0.00047837789954461685
+- 0.0
+quality:
+  fit_rmse_px: 0.11873996257781982
+  independent_test_rmse_px: 0.12215102463960648
+

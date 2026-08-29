@@ -1,0 +1,20 @@
+schema_version: 2
+source_calibration_run: calibration_tool/projects/daheng/outputs/0811
+method: checkerboard_plane_only
+units: mm
+coordinate_convention:
+  Xg: camera +X projected onto checkerboard reference plane; approximately image right
+  Yg: Zg cross Xg; approximately image up
+  Zg: checkerboard reference-plane normal toward camera; positive for protrusions
+  origin: intersection of camera principal axis and checkerboard pattern plane
+  zero_surface: checkerboard pattern surface
+T_ground_from_camera:
+- [0.9989971277915087, 0.0003664569910963127, 0.0447728084174941, -31.89361181346621]
+- [5.421010862427523e-20, -0.9999665061143105, 0.008184537222028755, -5.830200567232144]
+- [0.044774308083050864, -0.00817632917710942, -0.9989636674959064, 711.6051137507399]
+- [0.0, 0.0, 0.0, 1.0]
+quality:
+  fit_zg_rmse_mm: 0.038552180966037373
+  validation_zg_rmse_mm: 0.05364483488648976
+  validation_zg_p95_abs_mm: 0.0970038529483645
+  validation_zg_max_abs_mm: 0.1573296739422858

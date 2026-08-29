@@ -1,0 +1,83 @@
+coordinate_system: camera
+units: mm
+equation: a*x + b*y + c*z + d = 0
+plane:
+  a: 0.0014311252218193605
+  b: 0.9585581644365619
+  c: 0.28489330857815637
+  d: -207.97976675629045
+  normal_norm: 1.0
+intrinsics: D:\Docs\linelaserscan\calibration_tool\runs\0804\intrinsics\calibration_result.yaml
+image_size:
+- 2448
+- 2048
+fit_dir: D:\Docs\linelaserscan\calibration_tool\data\laser_plane\fit
+test_dir: D:\Docs\linelaserscan\calibration_tool\data\laser_plane\validation
+chess_pattern: chess {id:03d}.tif
+nolaser_pattern: nolaser {id:03d}.tif
+laser_pattern: laser {id:03d}.tif
+train_ids:
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+- 8
+- 9
+- 10
+- 11
+- 12
+- 13
+- 14
+- 15
+validation_ids:
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+- 7
+excluded_training_ids: []
+plane_ransac_threshold_mm: 0.5
+distance_definition: absolute orthogonal distance to normalized plane
+distance_variance_ddof: 0
+metrics:
+  train_fit_inliers:
+    point_count: 9149
+    mean_distance_mm: 0.12370160149414795
+    variance_distance_mm2: 0.006877730891820513
+    rmse_mm: 0.14892889949246754
+    p95_mm: 0.3214387710000381
+    max_mm: 0.4471740079961535
+    mean_signed_distance_mm: -0.0008873858872307647
+    variance_signed_distance_mm2: 0.02217902965032464
+  train_all_extracted:
+    point_count: 9149
+    mean_distance_mm: 0.12370160149414795
+    variance_distance_mm2: 0.006877730891820513
+    rmse_mm: 0.14892889949246754
+    p95_mm: 0.3214387710000381
+    max_mm: 0.4471740079961535
+    mean_signed_distance_mm: -0.0008873858872307647
+    variance_signed_distance_mm2: 0.02217902965032464
+  validation:
+    point_count: 4086
+    mean_distance_mm: 0.0978697728985255
+    variance_distance_mm2: 0.002770985675712016
+    rmse_mm: 0.11112820579367316
+    p95_mm: 0.18851144719562285
+    max_mm: 0.31362330804756766
+    mean_signed_distance_mm: -0.0418880999476197
+    variance_signed_distance_mm2: 0.010594865205699196
+centre_extraction:
+  method: steger_realtime
+  sigma: 1.5
+  threshold: 30.0
+  deriv_thresh: 0.5
+  roi_margin: 120
+  roi_max_height: 512
+  scan_axis: column
+  interactive_plotly_written: true

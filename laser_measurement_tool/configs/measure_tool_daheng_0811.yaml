@@ -1,0 +1,112 @@
+# 大恒 ME2P-1230 · 2026-08-11 标定 · 显式可选配置
+# 不作为默认配置。在线启动时同时传入：--camera-backend daheng --config <本文件>。
+
+schema_version: 1
+system: daheng
+
+# 相机硬 ROI；在线管线会加回偏移，恢复为 4096x3000 标定坐标。
+camera:
+  exposure_us: 2000.0
+  gain_db: 0.0
+  pixel_format: Mono8
+  offset_x: 1760
+  offset_y: 0
+  width: 480
+  height: 3000
+  timeout_ms: 3000
+
+calibration:
+  manifest: calibration_daheng_0811/manifest.yaml
+  intrinsics: calibration_daheng_0811/calibration_result.yaml
+  laser_model: calibration_daheng_0811/quadratic_graph.yaml
+  extrinsics: calibration_daheng_0811/camera_ground_extrinsics.yaml
+  ground_u_compensation: null
+  laser_ray_correction: calibration_daheng_0811/frozen_c1_4k.json
+
+correction:
+  # 互斥模式：none / h1 / hb2。当前仍保持 H1 为配置默认值。
+  # H1/H-B2 都只作用于最终 raw height，不修改 C0/C1、lambda 或点云坐标。
+  mode: h1
+  stage_a_height_scale_enabled: true
+  stage_a_height_scale_config: calibration_daheng_0811/stage_a_height_scale.json
+  hb2_height_correction_config: calibration_daheng_0811/hb2_height_correction.json
+  # 有限 q2 超出域时仍计算诊断外推值，但保留 Stage-B OOD 状态；
+  # reject 可禁止计算，clamp_diagnostic 仅显式用于诊断截断。
+  hb2_q2_policy: extrapolate_diagnostic
+
+session_ground_calibration:
+  # 开发阶段允许继续使用 reference；点击在线工具中的 Session 基准标定后切换。
+  mode: optional
+  pattern_cols: 11
+  pattern_rows: 8
+  square_size_mm: 20.0
+  detector: sb_then_classic
+  output: null
+  quality:
+    target_frames: 5
+    max_capture_attempts: 8
+    max_reprojection_rmse_px: 0.5
+    saturation_ratio_warn: 0.05
+    dynamic_range_p95_p5_warn: 20.0
+    edge_margin_warn_px: 20.0
+  ground_reference:
+    support_source: pnp_board_mask
+    mask_inset_mm: 0.0
+  sanity:
+    # 使用 PnP 投影的完整棋盘物理边界；0 mm 表示完整 12x9 方格，
+    # 不做像素腐蚀/膨胀；仅用于报警判定，不自动减 Bias、不拟合 a*S+b。
+    mask_enabled: true
+    mask_inset_mm: 0.0
+    min_valid_points: 20
+    max_abs_bias_mm: 2.0
+    max_rmse_mm: 2.0
+    max_p95_abs_mm: 3.0
+    max_abs_mm: 5.0
+    max_abs_slope_mm_per_mm: 0.02
+
+extraction:
+  method: steger
+  profile: realtime_steger.yaml
+  # 本轮大恒标定的激光线为纵向；逐行扫描，每行输出一个中心点。
+  steger:
+    scan_axis: row
+    # 全幅传感器坐标中的算法搜索 ROI；强制搜索整个横向范围，
+    # 避免自动单峰预搜索漏掉横向偏移较大的阶梯。
+    search_roi:
+      offset_x: 1760
+      offset_y: 0
+      width: 480
+      height: 3000
+  centroid:
+    background_kernel: 51
+    min_local_contrast_dn: 20.0
+    centroid_window_radius: 5
+    segment_min_columns: 42
+    continuity_max_column_gap: 2
+    continuity_max_vertical_jump: 14.0
+    correction_window: 7
+    correction_max_shift: 3.5
+    scan_axis: row
+
+reconstruction:
+  parallel_epsilon: 1.0e-9
+  quadratic_epsilon: 1.0e-12
+  # 保留现有在线工作距离门限；冻结 Quadratic 的 z_valid_range 下限约为 599.916 mm，
+  # 因此约 599.916–630.0 mm 仍会由在线门限主动过滤。
+  min_camera_depth_mm: 630.0
+  max_camera_depth_mm: 715.0
+  model_range_margin_mm: 2.0
+  image_roi_polygon: null
+  enable_laser_ray_correction: true
+
+measurement:
+  outlier_sigma_multiplier: 2.0
+  outlier_max_iterations: 5
+  min_baseline_points: 20
+  min_height_points: 20
+
+output:
+  dir: ../output_daheng_0811
+  save_pointcloud_csv: true
+  save_overlay_png: true
+  save_full_pointcloud_ply: true

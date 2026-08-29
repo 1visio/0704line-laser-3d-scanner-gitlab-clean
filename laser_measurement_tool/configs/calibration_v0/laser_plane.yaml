@@ -1,0 +1,9 @@
+# Runtime laser-plane calibration bundled with this tool snapshot.
+coordinate_system: camera
+units: mm
+equation: a*x + b*y + c*z + d = 0
+plane:
+  a: -0.007674435801431195
+  b: 0.957266158017049
+  c: 0.28910656469614804
+  d: -206.8374851061746

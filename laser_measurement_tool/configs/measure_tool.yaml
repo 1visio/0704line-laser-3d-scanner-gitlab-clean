@@ -1,0 +1,114 @@
+# 单帧线激光高度测量工具 · 统一配置
+# ------------------------------------------------------------------
+# 相对路径一律相对于本文件所在目录（laser_measurement_tool/configs/）解析。
+# 当前标定已随工具保存在 calibration/；字段详解见 ../docs/USAGE_CONFIG.md。
+
+schema_version: 1
+system: mvs
+
+camera:
+  exposure_us: 600.0
+  gain_db: 0.0
+  pixel_format: Mono8
+  offset_x: 0
+  offset_y: 800
+  width: 2440
+  height: 300
+  timeout_ms: 2000
+
+calibration:
+  manifest: calibration/manifest.yaml
+  # 相机内参：需含 camera_matrix(3x3) 与 dist_coeffs(4/5/8/12/14 个)
+  intrinsics: calibration/calibration_result.yaml
+  # 激光表面模型（相机系，mm）：当前生产包使用圆锥面模型
+  laser_model: calibration/circular_cone.yaml
+  # 地面外参：支持 R+t 或 T_ground_from_camera(4x4)
+  extrinsics: calibration/camera_ground_extrinsics.yaml
+  # 可选 U 补偿：支持 validation v2 的 CSV，关闭时改为 null
+  ground_u_compensation: null
+
+correction:
+  # 互斥模式：none / h1 / hb2；默认配置不启用高度修正。
+  mode: none
+  stage_a_height_scale_enabled: false
+  stage_a_height_scale_config: null
+  hb2_height_correction_config: null
+  hb2_q2_policy: reject
+
+session_ground_calibration:
+  # disabled=不提供入口；optional=使用 reference，可按需切换到 session；
+  # required=完成 Session 标定后才允许开始在线重建。
+  mode: optional
+  pattern_cols: 11
+  pattern_rows: 8
+  square_size_mm: 20.0
+  detector: sb_then_classic
+  output: null
+  quality:
+    target_frames: 5
+    max_capture_attempts: 8
+    max_reprojection_rmse_px: 0.5
+    saturation_ratio_warn: 0.05
+    dynamic_range_p95_p5_warn: 20.0
+    edge_margin_warn_px: 20.0
+  ground_reference:
+    # 运行时地面基准必须来自明确的支撑源；无 PnP 时可切换 manual_ground_roi。
+    support_source: pnp_board_mask
+    # 独立于 Ground Sanity 的棋盘物理边界 inset；0 表示完整物理棋盘 mask。
+    mask_inset_mm: 0.0
+  sanity:
+    # 使用 PnP 投影的完整棋盘物理边界；0 mm 表示完整 12x9 方格，
+    # 不做像素腐蚀/膨胀；只报警，不做 bias offset 或 a*S+b 拟合。
+    mask_enabled: true
+    mask_inset_mm: 0.0
+    min_valid_points: 20
+    max_abs_bias_mm: 2.0
+    max_rmse_mm: 2.0
+    max_p95_abs_mm: 3.0
+    max_abs_mm: 5.0
+    max_abs_slope_mm_per_mm: 0.02
+
+extraction:
+  # 标定与在线统一使用实时 Steger；参数集中在同目录 realtime_steger.yaml
+  method: steger
+  profile: realtime_steger.yaml
+  centroid:
+    background_kernel: 51            # 背景抑制高斯核（奇数，像素）
+    min_local_contrast_dn: 20.0      # 峰值最低局部对比度（DN，按源位深）
+    centroid_window_radius: 5        # 重心窗口半径（像素）
+    segment_min_columns: 42          # 分段最少列数，短段视为噪声丢弃
+    continuity_max_column_gap: 2     # 分段允许的最大列间隔
+    continuity_max_vertical_jump: 14.0  # 分段允许的最大纵向跳变（像素）
+    correction_window: 7             # 段内加权平滑窗口（正奇数；1=关闭）
+    correction_max_shift: 3.5        # 平滑允许的最大位移（像素）
+    scan_axis: column                # column=条纹接近水平；row=条纹接近竖直
+  steger:
+    search_roi:                     # 海康全幅传感器坐标中的算法搜索 ROI
+      offset_x: 0
+      offset_y: 800
+      width: 2440
+      height: 300
+  shared_steger:
+    {}                              # 历史名称兼容别名，实际参数来自同一 profile
+
+reconstruction:
+  parallel_epsilon: 1.0e-9           # 射线与全局平面近平行判据
+  quadratic_epsilon: 1.0e-12         # 二次曲面/圆锥求交退化判据
+  min_camera_depth_mm: 600.0         # 当前标定工作范围下限（相机系 Zc，mm）
+  max_camera_depth_mm: 725.0         # 当前标定工作范围上限（相机系 Zc，mm）
+  model_range_margin_mm: 10.0        # 模型有效深度范围外扩
+  # 可选固定姿态棋盘格 ROI，填写原始图像像素四边形：[[u1,v1], ...]。
+  # null 表示全幅重建；仅在棋盘格姿态固定时启用，动态姿态不要复用该多边形。
+  image_roi_polygon: null
+
+measurement:
+  outlier_sigma_multiplier: 2.0      # 残差超过该倍数稳健 σ 的点被剔除
+  outlier_max_iterations: 5          # 离群点剔除最大迭代次数
+  min_baseline_points: 20            # 基准线最少点数
+  min_height_points: 20              # 高度线最少点数
+
+output:
+  dir: ../output                     # 结果输出目录
+  save_pointcloud_csv: true          # 保存基准/高度线点云 CSV
+  save_overlay_png: true             # 保存叠加渲染图 PNG
+  save_full_pointcloud_ply: true     # 保存整幅激光线地面系 PLY（含 Zg 映射 RGB）

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "frozen": true,
+  "system": "daheng",
+  "model_id": "H-B2",
+  "status": "experimental_frozen_candidate",
+  "a0_mm": -0.10068827127712787,
+  "a2_mm_per_q2": 0.053274373969597236,
+  "q2_domain": [
+    -0.50189189917237,
+    1.4605125871893883
+  ],
+  "out_of_domain_policy": "reject",
+  "clamp_policy": "explicit_diagnostic_only",
+  "production_default": false,
+  "source_artifacts": {
+    "candidate": "outputs/daheng_c1_gauge_blocks_20260819_ground4a/surface2/surface3_hb2_candidate/surface3_hb2_candidate.json",
+    "parameters": "outputs/daheng_c1_gauge_blocks_20260819_ground4a/surface2/surface3_hb2_candidate/surface3_hb2_parameters.json",
+    "q2_domain": "outputs/daheng_c1_gauge_blocks_20260819_ground4a/surface2/surface3_hb2_candidate/surface3_hb2_q2_domain.json"
+  }
+}

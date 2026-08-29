@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="900" viewBox="0 0 1500 900">
+  <rect width="1500" height="900" fill="#eef1f4"/>
+  <rect x="0" y="0" width="1500" height="38" fill="#f8fafc" stroke="#cbd3dc"/>
+  <text x="18" y="25" font-family="Microsoft YaHei, sans-serif" font-size="16" font-weight="700" fill="#20262d">图像与条纹</text>
+  <rect x="152" y="7" width="128" height="25" rx="4" fill="#e7f0fc" stroke="#79a7e3"/>
+  <text x="171" y="24" font-family="Microsoft YaHei, sans-serif" font-size="13" fill="#174ea6">三维截面与时间轨迹</text>
+  <rect x="289" y="7" width="85" height="25" rx="4" fill="#fff" stroke="#b8c1cb"/>
+  <text x="307" y="24" font-family="Microsoft YaHei, sans-serif" font-size="13" fill="#28313a">二维截面</text>
+
+  <rect x="0" y="38" width="1160" height="50" fill="#f8fafc" stroke="#cbd3dc"/>
+  <text x="18" y="69" font-family="Microsoft YaHei, sans-serif" font-size="16" font-weight="700" fill="#20262d">图像预览</text>
+  <text x="160" y="69" font-family="Microsoft YaHei, sans-serif" font-size="13" fill="#5c6670">视野</text>
+  <rect x="197" y="50" width="82" height="27" rx="4" fill="#e7f0fc" stroke="#79a7e3"/>
+  <text x="214" y="68" font-family="Microsoft YaHei, sans-serif" font-size="13" fill="#174ea6">铺满宽度</text>
+  <rect x="285" y="50" width="82" height="27" rx="4" fill="#fff" stroke="#b8c1cb"/>
+  <text x="302" y="68" font-family="Microsoft YaHei, sans-serif" font-size="13" fill="#28313a">整图适配</text>
+  <rect x="1015" y="50" width="112" height="27" rx="4" fill="#fff" stroke="#b8c1cb"/>
+  <text x="1034" y="68" font-family="Microsoft YaHei, sans-serif" font-size="13" fill="#28313a">复位视野</text>
+
+  <rect x="0" y="88" width="1160" height="355" fill="#25282d" stroke="#aeb4bc"/>
+  <text x="22" y="118" font-family="Microsoft YaHei, sans-serif" font-size="14" fill="#cbd3dc">原始图像</text>
+  <rect x="20" y="145" width="1118" height="245" fill="#050608"/>
+  <path d="M20 270 C260 268 450 272 680 269 S950 268 1138 270" fill="none" stroke="#aeb4bc" stroke-width="2" opacity=".65"/>
+  <path d="M20 271 C230 271 450 272 680 269 S950 268 1138 270" fill="none" stroke="#e8e8e8" stroke-width="1" opacity=".7"/>
+  <rect x="0" y="443" width="1160" height="365" fill="#25282d" stroke="#aeb4bc"/>
+  <text x="22" y="473" font-family="Microsoft YaHei, sans-serif" font-size="14" fill="#cbd3dc">激光中心提取</text>
+  <rect x="20" y="500" width="1118" height="255" fill="#050608"/>
+  <path d="M20 630 L150 630 L166 629 L210 631 L300 630 L328 637 L390 641 L455 638 L570 641 L670 638 L780 641 L890 638 L1030 640 L1138 639" fill="none" stroke="#19d46b" stroke-width="2"/>
+  <g fill="#48f58c">
+    <circle cx="50" cy="630" r="2"/><circle cx="120" cy="630" r="2"/><circle cx="250" cy="631" r="2"/><circle cx="350" cy="639" r="2"/><circle cx="500" cy="640" r="2"/><circle cx="720" cy="640" r="2"/><circle cx="970" cy="639" r="2"/><circle cx="1110" cy="639" r="2"/>
+  </g>
+
+  <rect x="1160" y="0" width="340" height="900" fill="#f8fafc" stroke="#cbd3dc"/>
+  <rect x="1175" y="15" width="310" height="115" rx="6" fill="#fff" stroke="#adb7c1"/>
+  <text x="1190" y="38" font-family="Microsoft YaHei, sans-serif" font-size="15" font-weight="700" fill="#20262d">相机</text>
+  <rect x="1190" y="48" width="280" height="27" rx="4" fill="#fff" stroke="#cbd3dc"/>
+  <text x="1200" y="67" font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#5c6670">MV-CS050-60GM · SN DA7711077</text>
+  <rect x="1190" y="84" width="85" height="27" rx="4" fill="#fff" stroke="#b8c1cb"/><text x="1212" y="102" font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#28313a">刷新</text>
+  <rect x="1282" y="84" width="85" height="27" rx="4" fill="#e7f0fc" stroke="#79a7e3"/><text x="1305" y="102" font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#174ea6">连接</text>
+  <rect x="1374" y="84" width="96" height="27" rx="4" fill="#fff" stroke="#b8c1cb"/><text x="1393" y="102" font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#28313a">断开</text>
+
+  <rect x="1175" y="140" width="310" height="252" rx="6" fill="#fff" stroke="#adb7c1"/>
+  <text x="1190" y="163" font-family="Microsoft YaHei, sans-serif" font-size="15" font-weight="700" fill="#20262d">采集参数（停流后应用）</text>
+  <g font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#5c6670">
+    <text x="1190" y="190">像素格式</text><text x="1190" y="219">曝光</text><text x="1190" y="248">增益</text><text x="1190" y="277">Offset X</text><text x="1190" y="306">Offset Y</text><text x="1190" y="335">宽度</text><text x="1190" y="364">高度</text>
+  </g>
+  <g font-family="Segoe UI, sans-serif" font-size="12" fill="#28313a">
+    <rect x="1260" y="174" width="210" height="23" rx="3" fill="#fff" stroke="#cbd3dc"/><text x="1270" y="190">Mono8</text>
+    <rect x="1260" y="203" width="210" height="23" rx="3" fill="#fff" stroke="#cbd3dc"/><text x="1270" y="219">600.00 μs</text>
+    <rect x="1260" y="232" width="210" height="23" rx="3" fill="#fff" stroke="#cbd3dc"/><text x="1270" y="248">0.00</text>
+    <rect x="1260" y="261" width="210" height="23" rx="3" fill="#fff" stroke="#cbd3dc"/><text x="1270" y="277">0</text>
+    <rect x="1260" y="290" width="210" height="23" rx="3" fill="#fff" stroke="#cbd3dc"/><text x="1270" y="306">880</text>
+    <rect x="1260" y="319" width="210" height="23" rx="3" fill="#fff" stroke="#cbd3dc"/><text x="1270" y="335">2448</text>
+    <rect x="1260" y="348" width="210" height="23" rx="3" fill="#fff" stroke="#cbd3dc"/><text x="1270" y="364">300</text>
+  </g>
+
+  <rect x="1175" y="402" width="310" height="55" rx="6" fill="#fff" stroke="#adb7c1"/><text x="1190" y="425" font-family="Microsoft YaHei, sans-serif" font-size="15" font-weight="700" fill="#20262d">处理参数（停流后应用）</text><text x="1190" y="446" font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#5c6670">提取算法</text><text x="1260" y="446" font-family="Segoe UI, sans-serif" font-size="12" fill="#28313a">steger</text>
+  <rect x="1175" y="467" width="310" height="190" rx="6" fill="#fff" stroke="#adb7c1"/>
+  <text x="1190" y="490" font-family="Microsoft YaHei, sans-serif" font-size="15" font-weight="700" fill="#20262d">在线运行</text>
+  <rect x="1190" y="502" width="135" height="27" rx="4" fill="#e7f0fc" stroke="#79a7e3"/><text x="1240" y="520" font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#174ea6">开始</text>
+  <rect x="1335" y="502" width="135" height="27" rx="4" fill="#fff" stroke="#b8c1cb"/><text x="1385" y="520" font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#28313a">停止</text>
+  <g font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#28313a">
+    <rect x="1190" y="536" width="280" height="27" rx="4" fill="#fff" stroke="#b8c1cb"/><text x="1285" y="554">保存当前帧</text>
+    <rect x="1190" y="570" width="280" height="27" rx="4" fill="#fff" stroke="#b8c1cb"/><text x="1260" y="588">导出当前点云/CSV</text>
+    <rect x="1190" y="604" width="280" height="27" rx="4" fill="#fff" stroke="#b8c1cb"/><text x="1250" y="622">单帧测量与区域选择</text>
+  </g>
+  <rect x="1175" y="668" width="310" height="190" rx="6" fill="#fff" stroke="#adb7c1"/>
+  <text x="1190" y="691" font-family="Microsoft YaHei, sans-serif" font-size="15" font-weight="700" fill="#20262d">实时状态</text>
+  <g font-family="Microsoft YaHei, sans-serif" font-size="12" fill="#5c6670">
+    <text x="1190" y="716">状态</text><text x="1260" y="716" fill="#167344">取流中</text>
+    <text x="1190" y="740">采集 fps</text><text x="1260" y="740" fill="#28313a">25.0</text>
+    <text x="1190" y="764">处理 fps</text><text x="1260" y="764" fill="#28313a">24.7</text>
+    <text x="1190" y="788">显示 fps</text><text x="1260" y="788" fill="#28313a">8.1</text>
+    <text x="1190" y="812">单帧处理</text><text x="1260" y="812" fill="#28313a">115.4 ms</text>
+    <text x="1190" y="836">丢帧/覆盖</text><text x="1260" y="836" fill="#28313a">0 / 0</text>
+  </g>
+
+  <g font-family="Segoe UI, sans-serif" font-size="16" font-weight="700" text-anchor="middle">
+    <circle cx="1110" cy="62" r="16" fill="#f59e0b"/><text x="1110" y="68" fill="#fff">1</text>
+    <circle cx="1105" cy="270" r="16" fill="#f59e0b"/><text x="1105" y="276" fill="#fff">2</text>
+    <circle cx="1448" cy="218" r="16" fill="#f59e0b"/><text x="1448" y="224" fill="#fff">3</text>
+    <circle cx="1448" cy="604" r="16" fill="#f59e0b"/><text x="1448" y="610" fill="#fff">4</text>
+    <circle cx="1448" cy="740" r="16" fill="#f59e0b"/><text x="1448" y="746" fill="#fff">5</text>
+  </g>
+</svg>

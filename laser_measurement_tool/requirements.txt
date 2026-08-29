@@ -1,0 +1,9 @@
+PySide6
+opencv-python
+numpy
+matplotlib
+PyYAML
+scipy
+pyqtgraph
+PyOpenGL
+pytest

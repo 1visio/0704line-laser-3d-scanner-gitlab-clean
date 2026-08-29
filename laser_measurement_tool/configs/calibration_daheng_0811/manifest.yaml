@@ -1,0 +1,40 @@
+schema_version: 1
+package_id: daheng-me2p-1230-20260818-quadratic-graph-v1
+camera:
+  model: Daheng ME2P-1230
+  image_width: 4096
+  image_height: 3000
+extractor:
+  algorithm: steger
+  settings:
+    sigma: 1.5
+    threshold: 30.0
+    deriv_thresh: 0.5
+    roi_margin: 48
+    roi_max_height: 512
+    scan_axis: row
+    search_roi:
+      offset_x: 1760
+      offset_y: 0
+      width: 480
+      height: 3000
+files:
+  intrinsics:
+    path: calibration_result.yaml
+    sha256: 91620a158bde846a47a5cfce6fe79eb34d0df775f70849b8509f559cec742640
+  laser_plane:
+    path: quadratic_graph.yaml
+    sha256: 5288995685c7703e8e62437e0becc1ede008040dbb2d3c60f1d0119edf1b8700
+  extrinsics:
+    path: camera_ground_extrinsics.yaml
+    sha256: 661087ac4ab93a5bda07a2e722f506760cdce71d0a1f0d24ce0dd5b5151b5d0e
+  ground_u_compensation: null
+  laser_ray_correction:
+    path: frozen_c1_4k.json
+    sha256: 32717a3688905b237b0acbfb54e3290e112bc816c9be1133825d255196801ae3
+quality:
+  intrinsics_test_rmse_px: 0.12215102463960648
+  laser_board_rmse_mm: 0.08321982635298517
+  laser_board_p95_mm: 0.14954585010671056
+  ground_validation_rmse_mm: 0.05364483488648976
+  camera_height_mm: 711.6051137507399

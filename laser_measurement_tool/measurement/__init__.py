@@ -1,0 +1,67 @@
+"""三维截面的区域管理、尺寸与几何量测功能。"""
+
+from .height_measure import (
+    GroundProfileFit,
+    HeightLineMeasurement,
+    LineFitXY,
+    MeasurementError,
+    MeasurementParams,
+    measure_height_line,
+    measure_height_lines,
+)
+from .ground_reference import (
+    FROZEN_SESSION_COORDINATE,
+    FROZEN_SESSION_FIT_POSE_IDS,
+    FROZEN_SESSION_FORMULA,
+    GROUND_SUPPORT_FROZEN_SESSION,
+    GROUND_SUPPORT_MANUAL_ROI,
+    GROUND_SUPPORT_PNP_BOARD_MASK,
+    SessionGroundReference,
+    SUPPORTED_GROUND_FIT_SUPPORT_SOURCES,
+    SUPPORTED_GROUND_SUPPORT_SOURCES,
+    fit_ground_profile,
+    fit_line_xy,
+    fit_session_ground_reference,
+    fit_session_ground_reference_from_support,
+    load_frozen_session_ground_reference,
+)
+from .board_mask import (
+    BoardGroundPointSelection,
+    full_board_physical_polygon,
+    select_board_ground_points,
+    select_board_ground_points_with_mask,
+    select_manual_ground_roi_points,
+)
+from .roi_manager import RoiKind, RoiManager, RoiRegion
+
+__all__ = [
+    "HeightLineMeasurement",
+    "BoardGroundPointSelection",
+    "GroundProfileFit",
+    "LineFitXY",
+    "MeasurementError",
+    "MeasurementParams",
+    "RoiKind",
+    "RoiManager",
+    "RoiRegion",
+    "FROZEN_SESSION_COORDINATE",
+    "FROZEN_SESSION_FIT_POSE_IDS",
+    "FROZEN_SESSION_FORMULA",
+    "GROUND_SUPPORT_FROZEN_SESSION",
+    "GROUND_SUPPORT_MANUAL_ROI",
+    "GROUND_SUPPORT_PNP_BOARD_MASK",
+    "SessionGroundReference",
+    "SUPPORTED_GROUND_FIT_SUPPORT_SOURCES",
+    "SUPPORTED_GROUND_SUPPORT_SOURCES",
+    "fit_ground_profile",
+    "fit_line_xy",
+    "fit_session_ground_reference",
+    "fit_session_ground_reference_from_support",
+    "load_frozen_session_ground_reference",
+    "full_board_physical_polygon",
+    "measure_height_line",
+    "measure_height_lines",
+    "select_board_ground_points",
+    "select_board_ground_points_with_mask",
+    "select_manual_ground_roi_points",
+]

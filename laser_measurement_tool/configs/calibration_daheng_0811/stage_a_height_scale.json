@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "system": "daheng",
+  "status": "experimental_stage_validated",
+  "valid_height_mm": [1.0, 30.0],
+  "scale": 1.00403395913372,
+  "fit_equation": "height_stage_a = scale * height_raw",
+  "out_of_domain_action": "retain_raw_and_mark_out_of_valid_domain",
+  "production_calibration": false,
+  "source_artifact": "outputs/daheng_c1_gauge_blocks_20260819_ground4a/height50_heldout/frozen_height_scale.json"
+}
